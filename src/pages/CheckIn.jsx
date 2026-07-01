@@ -1,0 +1,8 @@
+// TODO: implement CheckIn
+export default function CheckIn() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <p className="text-gray-400 text-sm">CheckIn — coming soon</p>
+    </div>
+  );
+}
