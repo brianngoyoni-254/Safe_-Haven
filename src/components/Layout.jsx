@@ -109,8 +109,18 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="flex-1 p-6 overflow-y-auto">
-          <Outlet />
+        <main className="relative flex-1 overflow-y-auto bg-slate-50">
+          {/* Decorative background — shared across all pages rendered inside Layout */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -top-32 -right-20 h-80 w-80 rounded-full bg-teal-200/35 blur-3xl" />
+            <div className="absolute top-1/2 -left-24 h-72 w-72 rounded-full bg-emerald-100/40 blur-3xl" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(15,23,42,0.05)_1px,transparent_0)] bg-[size:24px_24px]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-transparent to-white/40" />
+          </div>
+
+          <div className="relative z-10 p-6">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
