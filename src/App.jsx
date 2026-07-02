@@ -17,7 +17,7 @@ import Dashboard    from "./pages/Dashboard";
 import CheckIn      from "./pages/CheckIn";
 import Milestones   from "./pages/Milestones";
 import Groups       from "./pages/Groups";
-import Journal      from "./pages/Journal";
+import Journal      from "./pages/Journals";
 import Resources    from "./pages/Resources";
 import Crisis       from "./pages/Crisis";
 
