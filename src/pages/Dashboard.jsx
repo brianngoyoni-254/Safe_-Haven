@@ -183,7 +183,7 @@ export default function Dashboard() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {greeting}, {displayName}
+            {greeting}, {displayName} <span aria-hidden="true">👋</span>
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
@@ -196,10 +196,10 @@ export default function Dashboard() {
         ) : (
           <Link
             to="/check-in"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-white bg-teal-600
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-white bg-teal-600
               hover:bg-teal-500 active:scale-[0.98] transition-all duration-150 cursor-pointer"
           >
-            <Heart className="w-3.5 h-3.5" /> Check in
+            <Heart className="w-3.5 h-3.5" /> Check In
           </Link>
         )}
       </div>
