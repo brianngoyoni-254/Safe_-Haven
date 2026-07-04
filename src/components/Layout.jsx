@@ -195,7 +195,7 @@ function MobileBottomNav() {
   );
 }
 
-export default function Layout() {
+export default function Layout({ children }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [showCrisisBanner, setShowCrisisBanner] = useState(
@@ -227,7 +227,7 @@ export default function Layout() {
       )}
 
       {/* Main */}
-      <div className={`flex-1 flex flex-col min-w-0 ${showCrisisBanner ? "mt-11" : ""}`}>
+      <div className={`flex-1 flex flex-col min-w-0 min-h-0 ${showCrisisBanner ? "mt-11" : ""}`}>
         {/* Mobile topbar */}
         <header className="lg:hidden h-16 flex items-center gap-4 px-4 bg-white border-b border-gray-100 flex-shrink-0">
           <button
@@ -254,7 +254,8 @@ export default function Layout() {
           )}
         </header>
 
-        <main className="relative flex-1 overflow-y-auto bg-slate-50 pb-16 lg:pb-0">
+        
+        <main className="relative flex-1 min-h-0 overflow-y-auto bg-slate-50 pb-16 lg:pb-0">
           {/* Decorative background — shared across all pages rendered inside Layout */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute -top-32 -right-20 h-80 w-80 rounded-full bg-teal-200/35 blur-3xl" />
@@ -264,7 +265,7 @@ export default function Layout() {
           </div>
 
           <div className="relative z-10 p-6">
-            <Outlet />
+            {children ?? <Outlet />}
           </div>
         </main>
       </div>
