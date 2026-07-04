@@ -20,6 +20,7 @@ import Groups       from "./pages/Groups";
 import Journal      from "./pages/Journals";
 import Resources    from "./pages/Resources";
 import Crisis       from "./pages/Crisis";
+import Profile      from "./pages/Profile";
 
 //Layout 
 import Layout from "./components/Layout";
@@ -208,6 +209,7 @@ function AppRoutes() {
           <Route path="/groups/*"   element={<Groups     />} />
           <Route path="/journal"    element={<Journal    />} />
           <Route path="/resources"  element={<Resources  />} />
+          <Route path="/profile"    element={<Profile    />} />
         </Route>
 
       </Route>
