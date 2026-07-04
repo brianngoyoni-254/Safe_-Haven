@@ -171,6 +171,38 @@ function GuestRoute() {
   return isLoggedIn ? <Navigate to={from} replace /> : <Outlet />;
 }
 
+// Groups is the one page that needs to work both logged-out (public browsing)
+// and logged-in (inside the app shell). Routing it as two separate <Route>
+// entries — one at "/groups" and one nested at "/groups/*" under <Layout /> —
+// caused React Router to always match the plain "/groups" path first, since
+// an exact static path outranks a wildcard one regardless of nesting. That's
+// why Groups was rendering full-page for logged-in users instead of inside
+// the sidebar shell like every other page.
+// Fix: a single route that picks the right view itself, so there's no path
+// collision for React Router to resolve.
+function GroupsGate() {
+  const { isLoggedIn, isReady } = useAuth();
+
+  if (!isReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 size={40} className="text-teal-600 animate-spin" />
+          <p className="text-sm text-gray-400">Loading Safe Haven…</p>
+        </div>
+      </div>
+    );
+  }
+
+  return isLoggedIn ? (
+    <Layout>
+      <Groups />
+    </Layout>
+  ) : (
+    <Groups publicView />
+  );
+}
+
 
 // ROUTER
 
@@ -181,8 +213,10 @@ function AppRoutes() {
     
       <Route path="/" element={<LandingPage />} />
 
-      {/* Support groups browsable without login */}
-      <Route path="/groups" element={<Groups publicView />} />
+      {/* Support groups: browsable without login, full shell when logged in.
+          GroupsGate decides which to render, avoiding the path collision
+          that used to exist between this and the nested /groups/* route. */}
+      <Route path="/groups/*" element={<GroupsGate />} />
 
       {/* Crisis support always accessible — no login required */}
       <Route path="/crisis" element={<Crisis />} />
@@ -206,7 +240,6 @@ function AppRoutes() {
           <Route path="/dashboard"  element={<Dashboard  />} />
           <Route path="/check-in"   element={<CheckIn    />} />
           <Route path="/milestones" element={<Milestones />} />
-          <Route path="/groups/*"   element={<Groups     />} />
           <Route path="/journal"    element={<Journal    />} />
           <Route path="/resources"  element={<Resources  />} />
           <Route path="/profile"    element={<Profile    />} />
