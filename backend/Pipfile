@@ -6,10 +6,10 @@ name = "pypi"
 [packages]
 flask = "*"
 flask-cors = "*"
-python-dotenv = "*"
 firebase-admin = "*"
 pyjwt = "*"
 werkzeug = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
