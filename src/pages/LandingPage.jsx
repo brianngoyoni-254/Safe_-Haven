@@ -90,7 +90,7 @@ function Hero({ isLoggedIn, navigate }) {
                 <LogIn size={18} /> Sign In
               </button>
               <button
-                onClick={() => navigate("/groups")}
+                onClick={() => navigate("/login", { state: { redirectTo: "/groups" } })}
                 className="px-6 py-3 rounded-lg font-medium text-white bg-white/10 backdrop-blur-sm border border-white/30 hover:bg-white/20 hover:border-white/50 hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 cursor-pointer"
               >
                 Browse Support Groups

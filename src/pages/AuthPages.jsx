@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   signInWithPopup,
   signInWithEmailAndPassword,
@@ -19,7 +19,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-// ─── Google logo ──────────────────────────────────────────────────────────────
+// Google logo 
 const GoogleLogo = () => (
   <svg width={18} height={18} viewBox="0 0 24 24">
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -29,7 +29,7 @@ const GoogleLogo = () => (
   </svg>
 );
 
-// ─── Firebase error → friendly message ───────────────────────────────────────
+//  Firebase error → friendly message 
 function friendlyError(code) {
   const map = {
     "auth/user-not-found":         "No account found with that email.",
@@ -45,10 +45,10 @@ function friendlyError(code) {
   return map[code] ?? "Something went wrong. Please try again.";
 }
 
-/**
- * Exchange a Firebase ID token for our app's JWT via Flask.
- * POST /api/auth/firebase  →  { user, access_token, expires_in }
- */
+
+ // Exchange a Firebase ID token for our app's JWT via Flask.
+ // POST /api/auth/firebase  →  { user, access_token, expires_in }
+ 
 async function exchangeFirebaseToken(firebaseToken, username = null) {
   const res = await fetch("/api/auth/firebase", {
     method: "POST",
@@ -64,11 +64,11 @@ async function exchangeFirebaseToken(firebaseToken, username = null) {
   return data;
 }
 
-// ─── Background (same hero image as LandingPage) ─────────────────────────────
+// Background  
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1762181702079-40f2f9ac56e4?fm=jpg&q=80&w=2400&auto=format&fit=crop";
 
-// ─── Shared UI pieces ─────────────────────────────────────────────────────────
+//Shared UI pieces 
 function Input({ icon: IconComp, type = "text", placeholder, value, onChange, rightElement }) {
   return (
     <div className="relative">
@@ -163,12 +163,14 @@ function Logo({ subtitle }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+
 // LOGIN VIEW
-// ═══════════════════════════════════════════════════════════════════════════════
+
 function LoginView({ onSwitch }) {
   const { login }  = useAuth();
   const navigate   = useNavigate();
+  const location   = useLocation();
+  const redirectTo = location.state?.redirectTo ?? "/onboarding";
 
   const [email,        setEmail]        = useState("");
   const [password,     setPassword]     = useState("");
@@ -185,7 +187,7 @@ function LoginView({ onSwitch }) {
       const firebaseToken = await result.user.getIdToken();
       const data          = await exchangeFirebaseToken(firebaseToken);
       login(data);
-      navigate("/onboarding", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(friendlyError(err.code ?? err.message));
     } finally {
@@ -202,7 +204,7 @@ function LoginView({ onSwitch }) {
       const firebaseToken = await result.user.getIdToken();
       const data          = await exchangeFirebaseToken(firebaseToken);
       login(data);
-      navigate("/onboarding", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(friendlyError(err.code ?? err.message));
     } finally {
@@ -277,12 +279,14 @@ function LoginView({ onSwitch }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+
 // REGISTER VIEW
-// ═══════════════════════════════════════════════════════════════════════════════
+
 function RegisterView({ onSwitch }) {
   const { login }  = useAuth();
   const navigate   = useNavigate();
+  const location   = useLocation();
+  const redirectTo = location.state?.redirectTo ?? "/onboarding";
 
   const [username,     setUsername]     = useState("");
   const [email,        setEmail]        = useState("");
@@ -303,7 +307,7 @@ function RegisterView({ onSwitch }) {
         result.user.displayName ?? undefined
       );
       login(data);
-      navigate("/onboarding", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(friendlyError(err.code ?? err.message));
     } finally {
@@ -322,7 +326,7 @@ function RegisterView({ onSwitch }) {
       const firebaseToken = await result.user.getIdToken();
       const data          = await exchangeFirebaseToken(firebaseToken, username.trim());
       login(data);
-      navigate("/onboarding", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(friendlyError(err.code ?? err.message));
     } finally {
@@ -400,9 +404,9 @@ function RegisterView({ onSwitch }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+
 // FORGOT PASSWORD VIEW
-// ═══════════════════════════════════════════════════════════════════════════════
+
 function ForgotView({ onSwitch }) {
   const [email,   setEmail]   = useState("");
   const [loading, setLoading] = useState(false);
@@ -474,9 +478,9 @@ function ForgotView({ onSwitch }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+
 // ROOT
-// ═══════════════════════════════════════════════════════════════════════════════
+
 export default function AuthPages({ view: initialView = "login" }) {
   const [view, setView] = useState(initialView);
   const navigate = useNavigate();

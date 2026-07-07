@@ -14,6 +14,15 @@ import {
   ArrowLeft,
   X,
   Loader2,
+  Pencil,
+  Check,
+  Globe,
+  ExternalLink,
+  ShieldCheck,
+  Compass,
+  HeartHandshake,
+  Brain,
+  Phone,
 } from "lucide-react";
 
 // TODO(backend): replace every helper in this block with real API calls, e.g.
@@ -27,8 +36,13 @@ import {
 // deleteGroup(groupId)        -> DELETE /api/groups/:id             -> void
 // getMessages(groupId)        -> GET  /api/groups/:id/messages      -> Message[]
 // sendMessage(groupId, text)  -> POST /api/groups/:id/messages      -> Message
+// editMessage(groupId, msgId, text)   -> PATCH  /api/groups/:id/messages/:msgId -> Message
+// deleteMessage(groupId, msgId)       -> DELETE /api/groups/:id/messages/:msgId -> void
 // Ideally getMessages is backed by a live subscription (WebSocket/SSE/polling)
 // so new messages from other members show up without a refresh.
+// Only a message's author (or an organizer, if added later) should be
+// allowed to edit/delete it — enforce this server-side too; the isMine
+// check in the UI below is just a convenience for hiding the controls.
 
 const CATEGORIES = [
   "Substance Recovery",
@@ -153,6 +167,97 @@ const MOCK_MESSAGES = {
     { id: "m4", authorId: "u2", authorName: "Alex", text: "Reminder: meeting moved to 8pm tonight, not 7.", createdAt: Date.now() - 1000 * 60 * 200 },
   ],
 };
+
+// External support groups — independent organizations Safe Haven does not run or
+// moderate. TODO(backend): if this ever needs to be editable without a redeploy,
+// move it behind GET /api/external-groups; for now it's a curated, hand-verified
+// list of established fellowships and directories (Kenyan and international).
+// Every entry links out to the organization's own site — Safe Haven never hosts
+// their meetings or content. Verify links/numbers periodically, as they can change.
+const EXTERNAL_CATEGORIES = [
+  {
+    id: "kenya",
+    label: "Kenya-Based Fellowships",
+    blurb: "In-person and hybrid meetings run by established fellowships across Kenya.",
+    Icon: Compass,
+    iconBg: "bg-teal-50",
+    iconColor: "text-teal-600",
+    badge: "bg-teal-50 text-teal-700 border-teal-100",
+    groups: [
+      {
+        name: "AA Kenya Intergroup",
+        org: "Alcoholics Anonymous",
+        desc: "National fellowship with in-person meetings in Nairobi, Mombasa, the Coast, and other towns, plus roughly 25 weekly Zoom meetings for members anywhere in Kenya.",
+        url: "https://aa-kenya.or.ke",
+        format: "In-person & Zoom",
+      },
+      {
+        name: "Narcotics Anonymous Kenya",
+        org: "Narcotics Anonymous",
+        desc: "Peer-led, anonymous recovery meetings for anyone with a drug problem, with a growing network of groups based in and around Nairobi.",
+        url: "https://www.nakenya.com",
+        format: "In-person & online",
+      },
+      {
+        name: "NA Africa — Nairobi Meetings",
+        org: "Narcotics Anonymous",
+        desc: "Regional NA meeting directory listing in-person meetings in Nairobi (Parklands) alongside other East and West African cities.",
+        url: "https://naafrica.org/meetings/nairobi/",
+        format: "In-person",
+      },
+    ],
+  },
+  {
+    id: "global",
+    label: "Global Online Fellowships",
+    blurb: "Established 12-step fellowships offering meetings around the clock, in every time zone.",
+    Icon: Globe,
+    iconBg: "bg-cyan-50",
+    iconColor: "text-cyan-600",
+    badge: "bg-cyan-50 text-cyan-700 border-cyan-100",
+    groups: [
+      {
+        name: "Online Intergroup of AA (OIAA)",
+        org: "Alcoholics Anonymous",
+        desc: "The official worldwide directory of AA meetings held online, by phone, and by chat — reachable from anywhere with internet, any hour of the day.",
+        url: "https://aa-intergroup.org/meetings/",
+        format: "Online, 24/7",
+      },
+      {
+        name: "In The Rooms",
+        org: "Multi-fellowship community",
+        desc: "A free global recovery social network with 150+ weekly live video meetings spanning AA, NA, Al-Anon, and several non-12-step programs.",
+        url: "https://www.intherooms.com",
+        format: "Live video meetings",
+      },
+      {
+        name: "Al-Anon Family Groups",
+        org: "Al-Anon / Alateen",
+        desc: "Support for the family and friends of someone whose drinking has affected them — a worldwide directory that includes electronic and hybrid meetings.",
+        url: "https://al-anon.org/al-anon-meetings/find-an-al-anon-meeting/",
+        format: "In-person & electronic",
+      },
+    ],
+  },
+  {
+    id: "secular",
+    label: "Secular & Evidence-Based",
+    blurb: "Non-12-step, science-based support for anyone who prefers a different approach.",
+    Icon: Brain,
+    iconBg: "bg-violet-50",
+    iconColor: "text-violet-600",
+    badge: "bg-violet-50 text-violet-700 border-violet-100",
+    groups: [
+      {
+        name: "SMART Recovery Global",
+        org: "SMART Recovery",
+        desc: "Secular, CBT-based mutual-support meetings for any addictive behavior, with hundreds of free online sessions across multiple languages and time zones.",
+        url: "https://smartrecoveryglobal.org/meeting",
+        format: "Online, multilingual",
+      },
+    ],
+  },
+];
 
 function formatTime(ts) {
   const d = new Date(ts);
@@ -407,14 +512,18 @@ function CreateGroupModal({ open, onClose, onCreate }) {
   );
 }
 
-// ---------- Group chat ----------
+// Group chat
 
 function GroupChat({ group, user, onBack, onLeave }) {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const bottomRef = useRef(null);
+  const editInputRef = useRef(null);
   const uid = currentUserId(user);
   const uname = currentUserName(user);
 
@@ -470,6 +579,60 @@ function GroupChat({ group, user, onBack, onLeave }) {
     }
   };
 
+  const startEdit = (message) => {
+    setEditingId(message.id);
+    setEditDraft(message.text);
+    // focus after the textarea has rendered in place of the bubble
+    requestAnimationFrame(() => editInputRef.current?.focus());
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditDraft("");
+  };
+
+  const handleEditKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveEdit();
+    } else if (e.key === "Escape") {
+      cancelEdit();
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    const text = editDraft.trim();
+    const editingMessageId = editingId;
+    if (!text || !editingMessageId) return;
+    setIsSavingEdit(true);
+    try {
+      // TODO(backend): const saved = await editMessage(group.id, editingMessageId, text);
+      await new Promise((r) => setTimeout(r, 250)); // simulated save
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === editingMessageId ? { ...m, text, editedAt: Date.now() } : m
+        )
+      );
+      setEditingId(null);
+      setEditDraft("");
+    } catch {
+      // TODO(backend): surface an inline error and keep the editor open so the user can retry
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleDeleteMessage = async (message) => {
+    // Optimistically remove; roll back if the request fails.
+    setMessages((prev) => prev.filter((m) => m.id !== message.id));
+    if (editingId === message.id) cancelEdit();
+    try {
+      // TODO(backend): await deleteMessage(group.id, message.id);
+    } catch {
+      // TODO(backend): roll back — re-insert `message` into state and surface an error
+    }
+  };
+
   const catStyle = CATEGORY_STYLES[group.category] ?? "bg-gray-100 text-gray-600";
 
   return (
@@ -522,20 +685,82 @@ function GroupChat({ group, user, onBack, onLeave }) {
         ) : (
           messages.map((m) => {
             const isMine = m.authorId === uid;
+            const isEditing = editingId === m.id;
             return (
-              <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+              <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"} group`}>
                 <div className={`max-w-[75%] ${isMine ? "items-end" : "items-start"} flex flex-col gap-1`}>
-                  {!isMine && <span className="text-xs font-medium text-gray-500 px-1">{m.authorName}</span>}
-                  <div
-                    className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
-                      isMine
-                        ? "bg-teal-600 text-white rounded-br-sm"
-                        : "bg-white text-gray-800 border border-gray-100 rounded-bl-sm"
-                    }`}
-                  >
-                    {m.text}
-                  </div>
-                  <span className="text-[11px] text-gray-400 px-1">{formatTime(m.createdAt)}</span>
+                  <span className="text-xs font-medium text-gray-500 px-1">
+                    {isMine ? uname : m.authorName}
+                    {isMine && <span className="text-gray-400 font-normal"> (you)</span>}
+                  </span>
+
+                  {isEditing ? (
+                    <div className="w-full min-w-[220px] flex flex-col gap-1.5">
+                      <textarea
+                        ref={editInputRef}
+                        value={editDraft}
+                        onChange={(e) => setEditDraft(e.target.value)}
+                        onKeyDown={handleEditKeyDown}
+                        rows={2}
+                        className="w-full resize-none rounded-xl border border-teal-300 px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-shadow"
+                      />
+                      <div className="flex justify-end gap-1.5">
+                        <button
+                          onClick={cancelEdit}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
+                        >
+                          <X className="w-3 h-3" /> Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveEdit}
+                          disabled={!editDraft.trim() || isSavingEdit}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-white bg-teal-600 hover:bg-teal-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSavingEdit ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Check className="w-3 h-3" />
+                          )}
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      {isMine && (
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity order-first">
+                          <button
+                            onClick={() => startEdit(m)}
+                            aria-label="Edit message"
+                            className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 cursor-pointer"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMessage(m)}
+                            aria-label="Delete message"
+                            className="p-1.5 rounded-lg text-gray-400 hover:bg-rose-50 hover:text-rose-600 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                      <div
+                        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
+                          isMine
+                            ? "bg-teal-600 text-white rounded-br-sm"
+                            : "bg-white text-gray-800 border border-gray-100 rounded-bl-sm"
+                        }`}
+                      >
+                        {m.text}
+                      </div>
+                    </div>
+                  )}
+
+                  <span className="text-[11px] text-gray-400 px-1">
+                    {formatTime(m.createdAt)}
+                    {m.editedAt && " · edited"}
+                  </span>
                 </div>
               </div>
             );
@@ -567,11 +792,123 @@ function GroupChat({ group, user, onBack, onLeave }) {
   );
 }
 
+// External groups section 
+
+function ExternalGroupCard({ group, badgeStyle }) {
+  return (
+    <a
+      href={group.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group rounded-xl border border-gray-100 p-4 hover:border-teal-200 hover:shadow-sm transition-all cursor-pointer flex flex-col"
+    >
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <h3 className="font-semibold text-gray-900 text-sm leading-snug">{group.name}</h3>
+        <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover:text-teal-500 flex-shrink-0 mt-0.5 transition-colors" />
+      </div>
+      <div className="flex items-center gap-1.5 flex-wrap mb-2">
+        <span className={`text-xs px-1.5 py-0.5 rounded-full border ${badgeStyle}`}>{group.format}</span>
+        <span className="text-xs text-gray-400">{group.org}</span>
+      </div>
+      <p className="text-xs text-gray-500 leading-relaxed">{group.desc}</p>
+    </a>
+  );
+}
+
+function ExternalGroups() {
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return EXTERNAL_CATEGORIES;
+    return EXTERNAL_CATEGORIES
+      .map((cat) => ({
+        ...cat,
+        groups: cat.groups.filter((g) =>
+          g.name.toLowerCase().includes(q) ||
+          g.org.toLowerCase().includes(q) ||
+          g.desc.toLowerCase().includes(q)
+        ),
+      }))
+      .filter((cat) => cat.groups.length > 0);
+  }, [search]);
+
+  return (
+    <div className="space-y-5">
+      {/* Trust banner */}
+      <div className="flex items-start gap-3 bg-teal-50/60 border border-teal-100 rounded-2xl p-4">
+        <ShieldCheck className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-gray-600">
+          These are established, independent recovery organizations — Safe Haven doesn't run,
+          moderate, or profit from any of them. Each card links out to the organization's own
+          site so you can review their meeting schedule and join directly.
+        </p>
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Search external groups by name or type…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700
+            focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-shadow"
+        />
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="text-sm text-gray-400 italic px-1 py-10 text-center">
+          No external groups match your search.
+        </div>
+      )}
+
+      {/* Category sections */}
+      {filtered.map((cat) => (
+        <section key={cat.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="flex items-center gap-3 mb-1">
+            <div className={`w-10 h-10 rounded-xl ${cat.iconBg} flex items-center justify-center flex-shrink-0`}>
+              <cat.Icon className={`w-5 h-5 ${cat.iconColor}`} />
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-900">{cat.label}</h2>
+              <p className="text-xs text-gray-500">{cat.blurb}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+            {cat.groups.map((g) => (
+              <ExternalGroupCard key={g.name} group={g} badgeStyle={cat.badge} />
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {/* Reassurance / crisis footer */}
+      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex items-start gap-3">
+        <HeartHandshake className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-gray-600">
+          Trying an external meeting doesn't replace your Safe Haven community — think of it as
+          another door into support, especially outside the hours your groups here are active.
+          If you're in crisis right now, visit <span className="font-medium text-gray-800">Crisis Support</span>{" "}
+          or call the NACADA National Helpline on{" "}
+          <a href="tel:1192" className="text-teal-600 font-medium underline inline-flex items-center gap-1">
+            <Phone className="w-3 h-3" /> 1192
+          </a>
+          .
+        </p>
+      </div>
+    </div>
+  );
+}
+
 //  Main page 
 
 export default function Groups() {
   const { user } = useAuth();
 
+  const [page, setPage] = useState("community"); // "community" | "external"
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab] = useState("all"); // "all" | "mine"
@@ -686,16 +1023,52 @@ export default function Groups() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Support Groups</h1>
-          <p className="text-gray-500 text-sm mt-1">Connect with people who understand your journey.</p>
+          <p className="text-gray-500 text-sm mt-1">
+            {page === "community"
+              ? "Connect with people who understand your journey."
+              : "Established fellowships and directories beyond Safe Haven, in Kenya and worldwide."}
+          </p>
         </div>
+        {page === "community" && (
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-teal-500 transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Create Group
+          </button>
+        )}
+      </div>
+
+      {/* Section tabs */}
+      <div className="flex gap-2 border-b border-gray-200">
         <button
-          onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-teal-500 transition-colors cursor-pointer"
+          onClick={() => setPage("community")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer
+            ${
+              page === "community"
+                ? "border-teal-600 text-teal-700"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
         >
-          <Plus className="w-4 h-4" /> Create Group
+          <Users className="w-4 h-4" /> Safe Haven Groups
+        </button>
+        <button
+          onClick={() => setPage("external")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer
+            ${
+              page === "external"
+                ? "border-teal-600 text-teal-700"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+        >
+          <Globe className="w-4 h-4" /> External Groups
         </button>
       </div>
 
+      {page === "external" && <ExternalGroups />}
+
+      {page === "community" && (
+      <>
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
         {[
@@ -795,6 +1168,8 @@ export default function Groups() {
       )}
 
       <CreateGroupModal open={createOpen} onClose={() => setCreateOpen(false)} onCreate={handleCreate} />
+      </>
+      )}
     </div>
   );
 }
