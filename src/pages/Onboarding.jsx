@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../App";
+import logo from "../assets/logo.jpeg";
 import {
   Shield,
   Heart,
@@ -7,94 +8,155 @@ import {
   Users,
   MapPin,
   BookOpen,
+  Calendar,
+  MessageCircle,
+  PenLine,
   ArrowRight,
-  Star,
+  CheckCircle2,
+  PhoneCall,
 } from "lucide-react";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1762181702079-40f2f9ac56e4?fm=jpg&q=80&w=2400&auto=format&fit=crop";
 
-// Nav 
-function Navbar({ navigate }) {
+
+const serif = { fontFamily: "'Fraunces', serif" };
+
+//  Navbar 
+function Navbar({ name, navigate }) {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/15">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-teal-500/80 backdrop-blur-sm border border-teal-400/40 flex items-center justify-center shadow-lg">
-            <Shield size={16} className="text-white" />
-          </div>
-          <span className="font-semibold text-white text-lg">Safe Haven</span>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#EFEAE0]/90 backdrop-blur-md border-b border-[#12302E]/10">
+      <div className="max-w-6xl mx-auto px-6 h-[72px] flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <img src={logo} alt="Safe Haven logo" className="w-8 h-8 rounded-full object-cover" />
+          <span className="font-semibold text-[#12302E] text-lg tracking-tight" style={serif}>
+            Safe Haven
+          </span>
         </div>
         <button
           onClick={() => navigate("/dashboard")}
-          className="flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-400 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 cursor-pointer"
+          className="flex items-center gap-2 bg-[#0D6E64] text-[#F7F4EC] px-4 py-2.5 rounded-full text-sm font-semibold hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 cursor-pointer"
         >
-          Go to Dashboard <ArrowRight size={16} />
+          Skip to dashboard <ArrowRight size={16} />
         </button>
       </div>
-    </header>
+    </nav>
   );
 }
 
-//Hero 
-function Hero({ name, navigate }) {
+// Welcome hero
+function Welcome({ name, navigate }) {
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-16 overflow-hidden">
-      {/* Background photo */}
-      <div className="absolute inset-0">
-        <img
-          src={HERO_IMAGE}
-          alt=""
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-teal-950/85 via-teal-900/75 to-teal-950/90" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
-      </div>
-
+    <section className="relative bg-[#12302E] pt-[136px] pb-20 px-6 overflow-hidden">
+      <div
+        className="absolute inset-0 opacity-40"
+        style={{
+          background:
+            "radial-gradient(circle at 20% 20%, #0D6E64 0%, transparent 45%), radial-gradient(circle at 85% 15%, #C98A3E 0%, transparent 35%)",
+        }}
+      />
       <div className="relative max-w-3xl mx-auto text-center">
-        {name ? (
-          <span className="inline-block text-sm text-teal-50 bg-white/10 backdrop-blur-sm border border-white/25 rounded-full px-4 py-1.5 mb-8">
-            Welcome, {name} — your journey starts here
-          </span>
-        ) : (
-          <span className="inline-block text-sm text-teal-50 bg-white/10 backdrop-blur-sm border border-white/25 rounded-full px-4 py-1.5 mb-8">
-            A Recovery Support Network
-          </span>
-        )}
-        <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight mb-6 drop-shadow-sm">
-          You don't have<br />
-          to <span className="text-teal-300">recover alone</span>
+        <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-wide uppercase text-[#F1DEBC] mb-6">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#C98A3E]" />
+          Your account is ready
+        </span>
+        <h1
+          className="text-[34px] md:text-[48px] font-medium text-[#F7F4EC] leading-[1.1] tracking-tight mb-5"
+          style={serif}
+        >
+          Welcome{name ? `, ${name}` : ""}.<br />
+          You're in a safe place now.
         </h1>
-        <p className="text-lg text-teal-50/90 max-w-xl mx-auto mb-10 leading-relaxed">
-          Safe Haven is a private, supportive space to track your progress, connect with peers,
-          and discover nearby recovery resources — all with complete anonymity.
+        <p className="text-lg text-[#D8E8E4] max-w-xl mx-auto mb-10 leading-relaxed">
+          Everything here is private and anonymous — only you can see your
+          real identity. Take a minute to look around, or jump straight into
+          your first check-in.
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <button
+            onClick={() => navigate("/check-in")}
+            className="inline-flex items-center gap-2 bg-[#C98A3E] text-[#12302E] px-7 py-3.5 rounded-full font-bold text-[15px] hover:brightness-105 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer"
+          >
+            Start today's check-in <ArrowRight size={18} />
+          </button>
           <button
             onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2 bg-teal-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-teal-400 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 cursor-pointer"
+            className="inline-flex items-center gap-2 border-[1.5px] border-[#F7F4EC]/40 text-[#F7F4EC] px-7 py-3 rounded-full font-semibold text-[15px] hover:bg-white/10 hover:scale-[1.02] transition-all duration-200 cursor-pointer"
           >
-            Open My Dashboard <ArrowRight size={18} />
-          </button>
-          <button
-            onClick={() => navigate("/groups")}
-            className="px-6 py-3 rounded-lg font-medium text-white bg-white/10 backdrop-blur-sm border border-white/30 hover:bg-white/20 hover:border-white/50 hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 cursor-pointer"
-          >
-            Browse Support Groups
+            Go to my dashboard
           </button>
         </div>
+      </div>
+    </section>
+  );
+}
 
-        {/* Stats */}
-        <div className="mt-16 grid grid-cols-3 gap-8 border-t border-white/20 pt-12">
-          {[
-            { value: "500+", label: "Community Members" },
-            { value: "100+",   label: "Sober Days Tracked" },
-            { value: "50+",    label: "Support Groups" },
-          ].map((s) => (
-            <div key={s.label} className="text-center">
-              <p className="text-3xl font-bold text-white">{s.value}</p>
-              <p className="text-sm text-teal-50/75 mt-1">{s.label}</p>
-            </div>
+//Getting started checklist 
+const gettingStarted = [
+  {
+    num: "01",
+    Icon: MessageCircle,
+    title: "Do your first check-in",
+    desc: "Log your mood, cravings, and whether you stayed sober today. About 30 seconds.",
+    to: "/check-in",
+    cta: "Check in now",
+  },
+  {
+    num: "02",
+    Icon: Calendar,
+    title: "Set your recovery start date",
+    desc: "This is what unlocks your day count and milestone badges — 7, 30, 90, 180, 365 days.",
+    to: "/milestones",
+    cta: "Set my date",
+  },
+  {
+    num: "03",
+    Icon: Users,
+    title: "Find a support group",
+    desc: "Join a peer group inside Safe Haven, or browse established fellowships near you.",
+    to: "/groups",
+    cta: "Browse groups",
+  },
+  {
+    num: "04",
+    Icon: PenLine,
+    title: "Write your first journal entry",
+    desc: "A private space for anything you're not ready to say out loud yet. Only you can read it.",
+    to: "/journal",
+    cta: "Open journal",
+  },
+];
+
+function GettingStarted({ navigate }) {
+  return (
+    <section className="bg-[#EFEAE0] py-24 px-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="max-w-xl mb-14">
+          <span className="inline-block text-xs font-semibold tracking-widest uppercase text-[#C98A3E] mb-3">
+            Getting started
+          </span>
+          <h2 className="text-[30px] md:text-[38px] font-medium text-[#12302E] leading-[1.15]" style={serif}>
+            Four small things worth doing today.
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {gettingStarted.map((s) => (
+            <button
+              key={s.num}
+              onClick={() => navigate(s.to)}
+              className="group text-left bg-[#F7F4EC] rounded-[20px] p-7 border border-[#12302E]/10 hover:border-[#0D6E64]/40 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 cursor-pointer"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-11 h-11 rounded-xl bg-[#D8E8E4] flex items-center justify-center">
+                  <s.Icon size={20} className="text-[#0D6E64]" />
+                </div>
+                <span className="italic text-sm text-[#C98A3E]" style={serif}>{s.num}</span>
+              </div>
+              <h3 className="text-lg font-semibold text-[#12302E] mb-1.5">{s.title}</h3>
+              <p className="text-sm text-[#4A544C] leading-relaxed mb-4">{s.desc}</p>
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0D6E64] group-hover:gap-2.5 transition-all">
+                {s.cta} <ArrowRight size={15} />
+              </span>
+            </button>
           ))}
         </div>
       </div>
@@ -102,148 +164,62 @@ function Hero({ name, navigate }) {
   );
 }
 
-// Features 
+// What's here for you 
 const features = [
   {
-    Icon:      Heart,
-    iconColor: "text-rose-400",
-    iconBg:    "bg-rose-500/20 border border-rose-400/25",
-    title:     "Daily Check-ins",
-    desc:      "Track your mood, cravings, and sobriety every day with compassionate prompts.",
+    Icon: Heart,
+    title: "Daily check-ins",
+    desc: "A 30-second way to log mood, sleep, and cravings — tracked gently, never graded.",
   },
   {
-    Icon:      TrendingUp,
-    iconColor: "text-teal-300",
-    iconBg:    "bg-teal-500/20 border border-teal-400/25",
-    title:     "Milestone Badges",
-    desc:      "Celebrate every 7, 30, 90, 180, and 365 day milestone with achievement badges.",
+    Icon: Users,
+    title: "Support groups",
+    desc: "Join or start peer groups inside Safe Haven, plus directories of outside fellowships.",
   },
   {
-    Icon:      Users,
-    iconColor: "text-teal-300",
-    iconBg:    "bg-teal-500/20 border border-teal-400/25",
-    title:     "Support Groups",
-    desc:      "Join peer support communities organized by people who understand your journey.",
+    Icon: MapPin,
+    title: "Resources",
+    desc: "Browse treatment centers, counseling services, and recovery literature near you.",
   },
   {
-    Icon:      MapPin,
-    iconColor: "text-teal-300",
-    iconBg:    "bg-teal-500/20 border border-teal-400/25",
-    title:     "Resource Map",
-    desc:      "Find nearby rehab centers and counseling services on an interactive map.",
+    Icon: TrendingUp,
+    title: "Milestone badges",
+    desc: "Set your start date and watch progress add up — 7, 30, 90, 180, and 365 days.",
   },
   {
-    Icon:      BookOpen,
-    iconColor: "text-purple-300",
-    iconBg:    "bg-purple-500/20 border border-purple-400/25",
-    title:     "Private Journal",
-    desc:      "Write freely in your personal journal — completely private and secure.",
+    Icon: BookOpen,
+    title: "Private journal",
+    desc: "Write freely. Your entries are visible only to you, always.",
   },
   {
-    Icon:      Shield,
-    iconColor: "text-blue-300",
-    iconBg:    "bg-blue-500/20 border border-blue-400/25",
-    title:     "Anonymous Profiles",
-    desc:      "Your identity stays private. Choose your own anonymous display name.",
+    Icon: Shield,
+    title: "Anonymous by design",
+    desc: "You choose your display name. Your real identity is never shown to other members.",
   },
 ];
 
 function Features() {
   return (
-    <section className="relative py-24 px-6 overflow-hidden">
-      {/* Continued background */}
-      <div className="absolute inset-0">
-        <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-teal-950/92" />
-      </div>
-
-      <div className="relative max-w-6xl mx-auto">
-        <div className="text-center mb-14">
-          <h2 className="text-4xl font-bold text-white mb-4">Everything you need on your journey</h2>
-          <p className="text-teal-200/70 max-w-xl mx-auto">
-            Six powerful tools designed for people in recovery, built with privacy and compassion at the core.
-          </p>
+    <section className="bg-[#F7F4EC] py-24 px-6 border-y border-[#12302E]/10">
+      <div className="max-w-6xl mx-auto">
+        <div className="max-w-xl mb-14">
+          <span className="inline-block text-xs font-semibold tracking-widest uppercase text-[#C98A3E] mb-3">
+            What's here for you
+          </span>
+          <h2 className="text-[30px] md:text-[38px] font-medium text-[#12302E] leading-[1.15]" style={serif}>
+            Take your time. It's all still here whenever you need it.
+          </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((f) => (
-            <div
-              key={f.title}
-              className="bg-white/8 backdrop-blur-sm rounded-2xl p-6 border border-white/12 cursor-default"
-            >
-              <div className={`w-10 h-10 rounded-xl ${f.iconBg} flex items-center justify-center mb-4`}>
-                <f.Icon size={20} className={f.iconColor} />
+            <div key={f.title} className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#D8E8E4] flex items-center justify-center flex-shrink-0">
+                <f.Icon size={18} className="text-[#0D6E64]" />
               </div>
-              <h3 className="font-semibold text-white mb-2">{f.title}</h3>
-              <p className="text-sm text-teal-200/65 leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// Testimonials 
-const testimonials = [
-  {
-    quote:   "Safe Haven gave me a community when I needed it most. The daily check-ins keep me accountable.",
-    name:    "Phoenix R.",
-    days:    "187 days sober",
-    initial: "P",
-  },
-  {
-    quote:   "One full year. The milestone badges made every single day feel like a victory.",
-    name:    "River S.",
-    days:    "365 days sober",
-    initial: "R",
-  },
-  {
-    quote:   "The resource map helped me find a counselor within miles of my home. Life-changing.",
-    name:    "Sage M.",
-    days:    "42 days sober",
-    initial: "S",
-  },
-];
-
-function StarRating() {
-  return (
-    <div className="flex gap-0.5 mb-4">
-      {[...Array(5)].map((_, i) => (
-        <Star key={i} size={16} className="text-amber-400 fill-amber-400" />
-      ))}
-    </div>
-  );
-}
-
-function Testimonials() {
-  return (
-    <section className="relative py-24 px-6 overflow-hidden">
-      <div className="absolute inset-0">
-        <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-teal-950/90 to-teal-900/88" />
-      </div>
-
-      <div className="relative max-w-6xl mx-auto">
-        <div className="text-center mb-14">
-          <h2 className="text-4xl font-bold text-white mb-3">Stories from our community</h2>
-          <p className="text-teal-200/70">Real people, real journeys. Names changed for privacy.</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((t) => (
-            <div
-              key={t.name}
-              className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-6 cursor-default"
-            >
-              <StarRating />
-              <p className="text-teal-50/85 text-sm leading-relaxed mb-6">"{t.quote}"</p>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-teal-500/40 border border-teal-400/30 flex items-center justify-center text-teal-200 font-semibold text-sm">
-                  {t.initial}
-                </div>
-                <div>
-                  <p className="font-medium text-white text-sm">{t.name}</p>
-                  <p className="text-xs text-teal-300/70">{t.days}</p>
-                </div>
+              <div>
+                <h3 className="font-semibold text-[#12302E] mb-1">{f.title}</h3>
+                <p className="text-sm text-[#4A544C] leading-relaxed">{f.desc}</p>
               </div>
             </div>
           ))}
@@ -253,26 +229,30 @@ function Testimonials() {
   );
 }
 
-// CTA 
-function CTA({ navigate }) {
+// Crisis reassurance 
+function CrisisNote({ navigate }) {
   return (
-    <section className="relative py-20 px-6 overflow-hidden">
-      <div className="absolute inset-0">
-        <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-teal-950/94" />
-      </div>
-
-      <div className="relative max-w-3xl mx-auto">
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl py-16 px-8 text-center shadow-2xl">
-          <h2 className="text-3xl font-bold text-white mb-4">Your dashboard is ready</h2>
-          <p className="text-teal-100/80 mb-8 max-w-md mx-auto">
-            Everything is set up and waiting for you. Start your first check-in, explore support groups, or just look around.
-          </p>
+    <section className="bg-[#EFEAE0] py-16 px-6">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-[#12302E] rounded-[28px] p-8 md:p-10 flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
+          <div className="w-14 h-14 rounded-2xl bg-[#C98A3E]/20 flex items-center justify-center flex-shrink-0">
+            <PhoneCall size={24} className="text-[#F1DEBC]" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-[#F7F4EC] mb-1.5">
+              If today is harder than most, help is one tap away.
+            </h3>
+            <p className="text-sm text-[#D8E8E4]">
+              The NACADA helpline (1192) and other crisis lines are always
+              free, confidential, and available — no need to wait until
+              you're on the dashboard.
+            </p>
+          </div>
           <button
-            onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2 bg-teal-500 text-white font-semibold px-6 py-3 rounded-lg mx-auto hover:bg-teal-400 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 cursor-pointer"
+            onClick={() => navigate("/crisis")}
+            className="flex-shrink-0 bg-[#C98A3E] text-[#12302E] font-bold px-6 py-3 rounded-full text-sm hover:brightness-105 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer"
           >
-            Open Dashboard <ArrowRight size={18} />
+            Crisis support
           </button>
         </div>
       </div>
@@ -283,19 +263,13 @@ function CTA({ navigate }) {
 // Footer 
 function Footer() {
   return (
-    <footer className="relative overflow-hidden border-t border-white/10 py-8 px-6">
-      <div className="absolute inset-0">
-        <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-teal-950/95" />
-      </div>
-      <div className="relative max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+    <footer className="bg-[#EFEAE0] pt-4 pb-10 px-6">
+      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 pt-7 border-t border-[#12302E]/10 text-sm text-[#4A544C]">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-teal-500/70 border border-teal-400/30 flex items-center justify-center">
-            <Shield size={12} className="text-white" />
-          </div>
-          <span className="text-sm font-medium text-teal-100">Safe Haven</span>
+          <img src={logo} alt="Safe Haven logo" className="w-6 h-6 rounded-full object-cover" />
+          <span className="font-semibold text-[#12302E]" style={serif}>Safe Haven</span>
         </div>
-        <p className="text-xs text-teal-300/50">© 2026 Safe Haven. Supporting recovery, one day at a time.</p>
+        <span>© 2026 Safe Haven. Built in Kenya.</span>
       </div>
     </footer>
   );
@@ -305,15 +279,15 @@ function Footer() {
 export default function Onboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const name = user?.username ?? user?.displayName ?? "";
+  const name = user?.username ?? "";
 
   return (
     <div className="min-h-screen font-sans">
-      <Navbar navigate={navigate} />
-      <Hero name={name} navigate={navigate} />
+      <Navbar name={name} navigate={navigate} />
+      <Welcome name={name} navigate={navigate} />
+      <GettingStarted navigate={navigate} />
       <Features />
-      <Testimonials />
-      <CTA navigate={navigate} />
+      <CrisisNote navigate={navigate} />
       <Footer />
     </div>
   );

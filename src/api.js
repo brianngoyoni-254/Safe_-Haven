@@ -64,7 +64,7 @@ export const groupsApi = {
   leave:  (id)     => api.post(`/api/groups/${id}/leave`),
 };
 
-// ── Journal ───────────────────────────────────────────────────────────────────
+// Journal 
 export const journalApi = {
   list:   ()       => api.get("/api/journal"),
   create: (data)   => api.post("/api/journal", data),
@@ -72,7 +72,7 @@ export const journalApi = {
   delete: (id)     => api.delete(`/api/journal/${id}`),
 };
 
-// ── Resources ─────────────────────────────────────────────────────────────────
+// Resources
 export const resourcesApi = {
   list: (params) => api.get("/api/resources", { params }),
 };
