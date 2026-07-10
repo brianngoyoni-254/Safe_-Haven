@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  confirmPasswordReset,
 } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
 import { useAuth } from "../App";
+import logo from "../assets/logo.jpeg";
 import {
-  Shield,
   Eye,
   EyeOff,
   Mail,
@@ -17,7 +18,13 @@ import {
   User,
   ArrowLeft,
   Loader2,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
+
+
+
+const serif = { fontFamily: "'Fraunces', serif" };
 
 // Google logo 
 const GoogleLogo = () => (
@@ -41,6 +48,8 @@ function friendlyError(code) {
     "auth/popup-closed-by-user":   "Sign-in popup was closed.",
     "auth/network-request-failed": "Network error. Check your connection.",
     "auth/invalid-credential":     "Incorrect email or password.",
+    "auth/expired-action-code":    "This reset link has expired. Request a new one.",
+    "auth/invalid-action-code":    "This reset link is invalid or already used.",
   };
   return map[code] ?? "Something went wrong. Please try again.";
 }
@@ -64,15 +73,11 @@ async function exchangeFirebaseToken(firebaseToken, username = null) {
   return data;
 }
 
-// Background  
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1762181702079-40f2f9ac56e4?fm=jpg&q=80&w=2400&auto=format&fit=crop";
-
 //Shared UI pieces 
 function Input({ icon: IconComp, type = "text", placeholder, value, onChange, rightElement }) {
   return (
     <div className="relative">
-      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-teal-200/70">
+      <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-[#4A544C]/50">
         <IconComp size={16} />
       </div>
       <input
@@ -80,12 +85,12 @@ function Input({ icon: IconComp, type = "text", placeholder, value, onChange, ri
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className="w-full pl-10 pr-10 py-3 rounded-xl border border-white/20 text-sm
-          text-white placeholder-teal-200/50 bg-white/10 backdrop-blur-sm focus:outline-none
-          focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+        className="w-full pl-10 pr-10 py-3 rounded-xl border border-[#12302E]/15 text-sm
+          text-[#12302E] placeholder-[#4A544C]/40 bg-white focus:outline-none
+          focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-all"
       />
       {rightElement && (
-        <div className="absolute inset-y-0 right-3 flex items-center">
+        <div className="absolute inset-y-0 right-3.5 flex items-center">
           {rightElement}
         </div>
       )}
@@ -99,8 +104,8 @@ function SocialButton({ onClick, logo, label, loading }) {
       onClick={onClick}
       disabled={loading}
       className="flex items-center justify-center gap-3 w-full py-3 px-4 rounded-xl
-        border border-white/25 bg-white/90 text-sm font-medium text-gray-700
-        hover:bg-white hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]
+        border border-[#12302E]/15 bg-white text-sm font-medium text-[#12302E]
+        hover:border-[#12302E]/30 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]
         transition-all duration-150 disabled:opacity-50 cursor-pointer"
     >
       {logo}
@@ -114,8 +119,8 @@ function PrimaryButton({ onClick, children, loading }) {
     <button
       onClick={onClick}
       disabled={loading}
-      className="w-full py-3 px-4 rounded-xl bg-teal-500 text-white text-sm font-semibold
-        hover:bg-teal-400 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]
+      className="w-full py-3 px-4 rounded-xl bg-[#0D6E64] text-white text-sm font-semibold
+        hover:brightness-110 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]
         transition-all duration-150 disabled:opacity-60
         flex items-center justify-center gap-2 cursor-pointer"
     >
@@ -127,9 +132,9 @@ function PrimaryButton({ onClick, children, loading }) {
 function Divider() {
   return (
     <div className="flex items-center gap-3 my-4">
-      <div className="flex-1 h-px bg-white/20" />
-      <span className="text-xs text-teal-200/70">or</span>
-      <div className="flex-1 h-px bg-white/20" />
+      <div className="flex-1 h-px bg-[#12302E]/10" />
+      <span className="text-xs text-[#4A544C]/60">or</span>
+      <div className="flex-1 h-px bg-[#12302E]/10" />
     </div>
   );
 }
@@ -137,7 +142,7 @@ function Divider() {
 function ErrorBanner({ message }) {
   if (!message) return null;
   return (
-    <div className="text-xs text-red-200 bg-red-500/20 border border-red-400/30 rounded-xl px-3 py-2.5">
+    <div className="text-xs text-[#8a2340] bg-[#FCE7EF] border border-[#8a2340]/15 rounded-xl px-3 py-2.5">
       {message}
     </div>
   );
@@ -145,26 +150,24 @@ function ErrorBanner({ message }) {
 
 function Card({ children }) {
   return (
-    <div className="w-full max-w-sm bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl p-8">
+    <div className="w-full max-w-sm">
       {children}
     </div>
   );
 }
 
-function Logo({ subtitle }) {
+function FormHeader({ title, subtitle }) {
   return (
-    <div className="flex flex-col items-center mb-6">
-      <div className="w-12 h-12 rounded-full bg-teal-500/80 backdrop-blur-sm border border-teal-400/40 flex items-center justify-center mb-3 shadow-lg">
-        <Shield size={20} className="text-white" />
-      </div>
-      <h1 className="text-xl font-bold text-white">Safe Haven</h1>
-      <p className="text-sm text-teal-200/80 mt-0.5">{subtitle}</p>
+    <div className="mb-7">
+      <h1 className="text-2xl font-medium text-[#12302E] tracking-tight" style={serif}>{title}</h1>
+      <p className="text-sm text-[#4A544C] mt-1">{subtitle}</p>
     </div>
   );
 }
 
 
 // LOGIN VIEW
+
 
 function LoginView({ onSwitch }) {
   const { login }  = useAuth();
@@ -214,7 +217,7 @@ function LoginView({ onSwitch }) {
 
   return (
     <Card>
-      <Logo subtitle="Sign in to your account" />
+      <FormHeader title="Welcome back" subtitle="Sign in to your anonymous account" />
 
       <SocialButton
         onClick={handleGoogle}
@@ -242,7 +245,7 @@ function LoginView({ onSwitch }) {
           rightElement={
             <button
               onClick={() => setShowPassword((v) => !v)}
-              className="text-teal-200/60 hover:text-teal-100 transition-colors"
+              className="text-[#4A544C]/50 hover:text-[#12302E] transition-colors"
               tabIndex={-1}
             >
               {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -253,7 +256,7 @@ function LoginView({ onSwitch }) {
         <div className="flex justify-end -mt-1">
           <button
             onClick={() => onSwitch("forgot")}
-            className="text-xs text-teal-300 hover:text-white hover:underline transition-colors cursor-pointer"
+            className="text-xs text-[#0D6E64] hover:text-[#12302E] hover:underline transition-colors cursor-pointer"
           >
             Forgot password?
           </button>
@@ -266,11 +269,11 @@ function LoginView({ onSwitch }) {
         </PrimaryButton>
       </div>
 
-      <p className="text-center text-xs text-teal-200/70 mt-5">
+      <p className="text-center text-xs text-[#4A544C] mt-5">
         No account?{" "}
         <button
           onClick={() => onSwitch("register")}
-          className="text-teal-300 hover:text-white hover:underline font-medium transition-colors cursor-pointer"
+          className="text-[#0D6E64] hover:text-[#12302E] hover:underline font-semibold transition-colors cursor-pointer"
         >
           Create one
         </button>
@@ -281,6 +284,7 @@ function LoginView({ onSwitch }) {
 
 
 // REGISTER VIEW
+
 
 function RegisterView({ onSwitch }) {
   const { login }  = useAuth();
@@ -336,7 +340,7 @@ function RegisterView({ onSwitch }) {
 
   return (
     <Card>
-      <Logo subtitle="Create your anonymous account" />
+      <FormHeader title="Create your account" subtitle="Anonymous, free, and ready in under a minute" />
 
       <SocialButton
         onClick={handleGoogle}
@@ -370,7 +374,7 @@ function RegisterView({ onSwitch }) {
           rightElement={
             <button
               onClick={() => setShowPassword((v) => !v)}
-              className="text-teal-200/60 hover:text-teal-100 transition-colors"
+              className="text-[#4A544C]/50 hover:text-[#12302E] transition-colors"
               tabIndex={-1}
             >
               {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -385,17 +389,17 @@ function RegisterView({ onSwitch }) {
         </PrimaryButton>
       </div>
 
-      <p className="text-xs text-teal-200/60 text-center mt-4 leading-relaxed">
+      <p className="text-xs text-[#4A544C]/70 text-center mt-4 leading-relaxed">
         By signing up you agree to our{" "}
-        <span className="text-teal-300 cursor-pointer hover:text-white hover:underline transition-colors">privacy policy</span>.
+        <span className="text-[#0D6E64] cursor-pointer hover:text-[#12302E] hover:underline transition-colors">privacy policy</span>.
         Your identity stays anonymous.
       </p>
 
-      <p className="text-center text-xs text-teal-200/70 mt-4">
+      <p className="text-center text-xs text-[#4A544C] mt-4">
         Already have an account?{" "}
         <button
           onClick={() => onSwitch("login")}
-          className="text-teal-300 hover:text-white hover:underline font-medium transition-colors cursor-pointer"
+          className="text-[#0D6E64] hover:text-[#12302E] hover:underline font-semibold transition-colors cursor-pointer"
         >
           Sign in
         </button>
@@ -406,6 +410,7 @@ function RegisterView({ onSwitch }) {
 
 
 // FORGOT PASSWORD VIEW
+
 
 function ForgotView({ onSwitch }) {
   const [email,   setEmail]   = useState("");
@@ -431,36 +436,33 @@ function ForgotView({ onSwitch }) {
     <Card>
       <button
         onClick={() => onSwitch("login")}
-        className="flex items-center gap-1.5 text-xs text-teal-200/70 hover:text-white mb-6 -ml-1 transition-colors cursor-pointer"
+        className="flex items-center gap-1.5 text-xs text-[#4A544C] hover:text-[#12302E] mb-6 -ml-1 transition-colors cursor-pointer"
       >
         <ArrowLeft size={14} /> Back to sign in
       </button>
 
-      <Logo subtitle="Reset your password" />
+      <FormHeader title="Reset your password" subtitle="We'll send a secure link to your email" />
 
       {sent ? (
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full bg-teal-500/30 border border-teal-400/30 flex items-center justify-center mx-auto mb-4">
-            <Mail size={22} className="text-teal-300" />
+        <div className="text-center py-2">
+          <div className="w-12 h-12 rounded-full bg-[#D8E8E4] flex items-center justify-center mx-auto mb-4">
+            <Mail size={22} className="text-[#0D6E64]" />
           </div>
-          <p className="text-sm font-medium text-white mb-1">Check your inbox</p>
-          <p className="text-xs text-teal-200/70 leading-relaxed">
+          <p className="text-sm font-semibold text-[#12302E] mb-1">Check your inbox</p>
+          <p className="text-xs text-[#4A544C] leading-relaxed">
             A reset link was sent to{" "}
-            <span className="font-medium text-teal-200">{email}</span>.
+            <span className="font-medium text-[#12302E]">{email}</span>.
             It may take a minute to arrive.
           </p>
           <button
             onClick={() => onSwitch("login")}
-            className="mt-6 text-xs text-teal-300 hover:text-white hover:underline transition-colors cursor-pointer"
+            className="mt-6 text-xs text-[#0D6E64] hover:text-[#12302E] hover:underline transition-colors cursor-pointer"
           >
             Back to sign in
           </button>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-xs text-teal-200/70 text-center -mt-3 mb-2">
-            Enter your email and we'll send a reset link.
-          </p>
           <Input
             icon={Mail}
             type="email"
@@ -479,33 +481,184 @@ function ForgotView({ onSwitch }) {
 }
 
 
+// RESET PASSWORD VIEW (from the emailed link — /reset-password?oobCode=...)
+
+
+function ResetView({ onSwitch }) {
+  const [searchParams] = useSearchParams();
+  const oobCode = searchParams.get("oobCode");
+
+  const [password,        setPassword]        = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword,    setShowPassword]    = useState(false);
+  const [loading,         setLoading]         = useState(false);
+  const [done,            setDone]            = useState(false);
+  const [error,           setError]           = useState("");
+
+  const handleConfirm = async () => {
+    if (!oobCode) { setError("This reset link is missing or invalid."); return; }
+    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (password !== confirmPassword) { setError("Passwords don't match."); return; }
+    setError("");
+    setLoading(true);
+    try {
+      await confirmPasswordReset(auth, oobCode, password);
+      setDone(true);
+    } catch (err) {
+      setError(friendlyError(err.code ?? err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <FormHeader title="Set a new password" subtitle="Choose a new password for your account" />
+
+      {!oobCode ? (
+        <ErrorBanner message="This reset link is missing or invalid. Request a new one from the sign-in page." />
+      ) : done ? (
+        <div className="text-center py-2">
+          <div className="w-12 h-12 rounded-full bg-[#D8E8E4] flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 size={22} className="text-[#0D6E64]" />
+          </div>
+          <p className="text-sm font-semibold text-[#12302E] mb-1">Password updated</p>
+          <p className="text-xs text-[#4A544C] leading-relaxed mb-6">
+            You can now sign in with your new password.
+          </p>
+          <PrimaryButton onClick={() => onSwitch("login")}>Back to sign in</PrimaryButton>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <Input
+            icon={Lock}
+            type={showPassword ? "text" : "password"}
+            placeholder="New password (min 6 characters)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            rightElement={
+              <button
+                onClick={() => setShowPassword((v) => !v)}
+                className="text-[#4A544C]/50 hover:text-[#12302E] transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            }
+          />
+          <Input
+            icon={Lock}
+            type={showPassword ? "text" : "password"}
+            placeholder="Confirm new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          <ErrorBanner message={error} />
+          <PrimaryButton onClick={handleConfirm} loading={loading}>
+            Update password
+          </PrimaryButton>
+        </div>
+      )}
+
+      <p className="text-center text-xs text-[#4A544C] mt-5">
+        <button
+          onClick={() => onSwitch("login")}
+          className="text-[#0D6E64] hover:text-[#12302E] hover:underline font-semibold transition-colors cursor-pointer"
+        >
+          Back to sign in
+        </button>
+      </p>
+    </Card>
+  );
+}
+
+
+// LEFT BRAND PANEL (desktop only)
+
+
+const trustPoints = [
+  { Icon: ShieldCheck, text: "You choose your display name — your real identity is never shown" },
+  { Icon: CheckCircle2, text: "Free to join, always. No paywall on support" },
+  { Icon: Mail, text: "Your email is only ever used for sign-in and account recovery" },
+];
+
+function BrandPanel() {
+  return (
+    <div className="relative hidden lg:flex flex-col justify-between w-[42%] bg-[#12302E] p-12 overflow-hidden">
+      <div
+        className="absolute inset-0 opacity-40 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at 15% 15%, #0D6E64 0%, transparent 45%), radial-gradient(circle at 85% 80%, #C98A3E 0%, transparent 40%)",
+        }}
+      />
+      <div className="relative flex items-center gap-2.5">
+        <img src={logo} alt="Safe Haven logo" className="w-9 h-9 rounded-full object-cover" />
+        <span className="font-semibold text-[#F7F4EC] text-lg tracking-tight" style={serif}>
+          Safe Haven
+        </span>
+      </div>
+
+      <div className="relative">
+        <h2
+          className="text-[32px] font-medium text-[#F7F4EC] leading-[1.2] mb-6"
+          style={serif}
+        >
+          You don't have to<br />
+          <span className="italic text-[#F1DEBC]">recover</span> alone.
+        </h2>
+        <div className="space-y-4">
+          {trustPoints.map((t) => (
+            <div key={t.text} className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <t.Icon size={15} className="text-[#F1DEBC]" />
+              </div>
+              <p className="text-sm text-[#D8E8E4] leading-relaxed pt-1.5">{t.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="relative text-xs text-[#D8E8E4]/50">© 2026 Safe Haven. Built in Kenya.</p>
+    </div>
+  );
+}
+
+
 // ROOT
+
 
 export default function AuthPages({ view: initialView = "login" }) {
   const [view, setView] = useState(initialView);
   const navigate = useNavigate();
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 overflow-hidden">
-      {/* Background — same hero image as LandingPage */}
-      <div className="absolute inset-0">
-        <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-teal-950/85 via-teal-900/75 to-teal-950/90" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+    <div className="min-h-screen flex bg-[#F7F4EC]">
+      <BrandPanel />
+
+      <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-16">
+        {/* Back to home */}
+        <button
+          onClick={() => navigate("/")}
+          className="absolute top-6 left-6 flex items-center gap-1.5 text-sm font-medium text-[#4A544C]
+            hover:text-[#12302E] transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={18} /> Back
+        </button>
+
+        {/* Mobile-only logo (BrandPanel is hidden below lg) */}
+        <div className="lg:hidden flex items-center gap-2.5 mb-8">
+          <img src={logo} alt="Safe Haven logo" className="w-8 h-8 rounded-full object-cover" />
+          <span className="font-semibold text-[#12302E] text-lg tracking-tight" style={serif}>
+            Safe Haven
+          </span>
+        </div>
+
+        {view === "login"    && <LoginView    onSwitch={setView} />}
+        {view === "register" && <RegisterView onSwitch={setView} />}
+        {view === "forgot"   && <ForgotView   onSwitch={setView} />}
+        {view === "reset"    && <ResetView    onSwitch={setView} />}
       </div>
-
-      {/* Back to home */}
-      <button
-        onClick={() => navigate("/")}
-        className="fixed top-6 left-6 flex items-center gap-1.5 text-sm font-medium text-teal-200/80
-          hover:text-white transition-colors z-10 cursor-pointer"
-      >
-        <ArrowLeft size={18} /> Back
-      </button>
-
-      {view === "login"    && <div className="relative z-10 w-full flex justify-center"><LoginView    onSwitch={setView} /></div>}
-      {view === "register" && <div className="relative z-10 w-full flex justify-center"><RegisterView onSwitch={setView} /></div>}
-      {view === "forgot"   && <div className="relative z-10 w-full flex justify-center"><ForgotView   onSwitch={setView} /></div>}
     </div>
   );
 }

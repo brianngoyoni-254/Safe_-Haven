@@ -113,10 +113,10 @@ const SUPPORT_CATEGORIES = [
 
 const COLOR_STYLES = {
   teal: {
-    iconBg: "bg-teal-50",
-    iconColor: "text-teal-600",
-    badge: "bg-teal-50 text-teal-700 border-teal-100",
-    button: "bg-teal-600 hover:bg-teal-500",
+    iconBg: "bg-[#D8E8E4]",
+    iconColor: "text-[#0D6E64]",
+    badge: "bg-[#D8E8E4] text-[#0D6E64] border-[#0D6E64]/15",
+    button: "bg-[#0D6E64] hover:brightness-110",
   },
   cyan: {
     iconBg: "bg-cyan-50",
@@ -125,10 +125,10 @@ const COLOR_STYLES = {
     button: "bg-cyan-600 hover:bg-cyan-500",
   },
   rose: {
-    iconBg: "bg-rose-50",
-    iconColor: "text-rose-600",
-    badge: "bg-rose-50 text-rose-700 border-rose-100",
-    button: "bg-rose-500 hover:bg-rose-400",
+    iconBg: "bg-[#FCE7EF]",
+    iconColor: "text-[#c2417a]",
+    badge: "bg-[#FCE7EF] text-[#8a2340] border-[#c2417a]/15",
+    button: "bg-[#c2417a] hover:brightness-110",
   },
   violet: {
     iconBg: "bg-violet-50",
@@ -172,31 +172,31 @@ function BreathingExercise() {
   const scale = phase === "in" ? "scale-100" : phase === "out" ? "scale-50" : "scale-100";
 
   return (
-    <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center gap-4">
-      <div className="flex items-center gap-2 text-gray-900 font-semibold text-sm">
-        <Wind className="w-4 h-4 text-teal-600" /> A moment to breathe
+    <section className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-6 flex flex-col items-center text-center gap-4">
+      <div className="flex items-center gap-2 text-[#12302E] font-semibold text-sm">
+        <Wind className="w-4 h-4 text-[#0D6E64]" /> A moment to breathe
       </div>
 
       <div className="relative w-32 h-32 flex items-center justify-center">
         <div
-          className={`absolute inset-0 rounded-full bg-teal-100 transition-transform duration-[4000ms] ease-in-out ${
+          className={`absolute inset-0 rounded-full bg-[#D8E8E4] transition-transform duration-[4000ms] ease-in-out ${
             running ? scale : "scale-75"
           }`}
         />
-        <div className="absolute inset-4 rounded-full bg-teal-500/20" />
-        <span className="relative text-sm font-medium text-teal-700">
+        <div className="absolute inset-4 rounded-full bg-[#0D6E64]/20" />
+        <span className="relative text-sm font-medium text-[#0D6E64]">
           {running ? label : "Ready"}
         </span>
       </div>
 
-      <p className="text-xs text-gray-500 max-w-xs">
+      <p className="text-xs text-[#4A544C] max-w-xs">
         Four seconds in, four seconds hold, four seconds out. Repeat for as long as it helps.
       </p>
 
       <button
         onClick={() => setRunning((r) => !r)}
-        className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-teal-600
-          hover:bg-teal-500 active:scale-[0.98] transition-all duration-150 cursor-pointer"
+        className="px-5 py-2.5 rounded-full text-sm font-semibold text-[#F7F4EC] bg-[#0D6E64]
+          shadow-sm hover:brightness-110 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 cursor-pointer"
       >
         {running ? "Stop" : "Start breathing exercise"}
       </button>
@@ -207,9 +207,9 @@ function BreathingExercise() {
 function HotlineCard({ line, color }) {
   const styles = COLOR_STYLES[color];
   return (
-    <div className="rounded-xl border border-gray-100 p-4 space-y-2">
+    <div className="rounded-xl border border-[#12302E]/10 bg-[#F7F4EC]/60 p-4 space-y-2">
       <div className="flex items-start justify-between gap-2 flex-wrap">
-        <h3 className="font-semibold text-gray-900 text-sm">{line.name}</h3>
+        <h3 className="font-semibold text-[#12302E] text-sm">{line.name}</h3>
         <div className="flex gap-1.5 flex-wrap">
           {line.numbers.map((n) => (
             <span key={n} className={`text-xs px-2 py-0.5 rounded-full border ${styles.badge}`}>
@@ -218,7 +218,7 @@ function HotlineCard({ line, color }) {
           ))}
         </div>
       </div>
-      <p className="text-xs text-gray-500">{line.desc}</p>
+      <p className="text-xs text-[#4A544C]">{line.desc}</p>
       <div className="flex gap-2 pt-1">
         <a href={telHref(line.tel)} className="flex-1">
           <span
@@ -244,35 +244,39 @@ function HotlineCard({ line, color }) {
   );
 }
 
+const serif = { fontFamily: "'Fraunces', serif" };
+
 export default function Crisis() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Crisis Support</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-[28px] leading-tight font-medium text-[#12302E] tracking-tight" style={serif}>
+          Crisis Support
+        </h1>
+        <p className="text-[#4A544C] text-sm mt-1.5">
           You don't have to face this alone. Free, confidential help is available right now.
         </p>
       </div>
 
       {/* Immediate danger callout */}
-      <section className="bg-rose-50 border border-rose-200 rounded-2xl p-5 space-y-4">
+      <section className="bg-[#FCE7EF] border border-[#c2417a]/25 rounded-[20px] p-5 space-y-4">
         <div className="flex items-center gap-2">
-          <ShieldAlert className="w-5 h-5 text-rose-600" />
-          <h2 className="font-bold text-rose-800 text-sm">If you or someone else is in immediate danger</h2>
+          <ShieldAlert className="w-5 h-5 text-[#c2417a]" />
+          <h2 className="font-semibold text-[#8a2340] text-sm tracking-tight">If you or someone else is in immediate danger</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {EMERGENCY_LINES.map((line) => (
-            <div key={line.id} className="bg-white rounded-xl border border-rose-100 p-4">
+            <div key={line.id} className="bg-[#F7F4EC] rounded-[18px] border border-[#c2417a]/15 p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Siren className="w-4 h-4 text-rose-500" />
-                <h3 className="font-semibold text-gray-900 text-sm">{line.name}</h3>
+                <Siren className="w-4 h-4 text-[#c2417a]" />
+                <h3 className="font-semibold text-[#12302E] text-sm">{line.name}</h3>
               </div>
-              <p className="text-xs text-gray-500 mb-3">{line.desc}</p>
+              <p className="text-xs text-[#4A544C] mb-3">{line.desc}</p>
               <div className="flex gap-2 flex-wrap">
                 {line.numbers.map((n) => (
                   <a key={n} href={telHref(n)} className="flex-1 min-w-[100px]">
-                    <span className="flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 transition-colors cursor-pointer">
+                    <span className="flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-semibold text-white bg-[#c2417a] hover:brightness-110 transition-colors cursor-pointer">
                       <Phone className="w-4 h-4" /> {n}
                     </span>
                   </a>
@@ -284,7 +288,7 @@ export default function Crisis() {
       </section>
 
       {/* Reassurance */}
-      <p className="text-sm text-gray-600 bg-teal-50/60 border border-teal-100 rounded-2xl p-4">
+      <p className="text-sm text-[#4A544C] bg-[#D8E8E4]/50 border border-[#0D6E64]/15 rounded-[20px] p-4">
         If you're having thoughts of suicide, please reach out to one of the lines below — someone is
         ready to listen, day or night. Recovery isn't linear, and reaching out is a sign of strength,
         not failure.
@@ -299,12 +303,12 @@ export default function Crisis() {
           const styles = COLOR_STYLES[cat.color];
           const Icon = cat.Icon;
           return (
-            <section key={cat.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <section key={cat.id} className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className={`w-10 h-10 rounded-xl ${styles.iconBg} flex items-center justify-center`}>
                   <Icon className={`w-5 h-5 ${styles.iconColor}`} />
                 </div>
-                <h2 className="font-bold text-gray-900">{cat.title}</h2>
+                <h2 className="font-semibold text-[#12302E] tracking-tight">{cat.title}</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {cat.lines.map((line) => (
@@ -317,8 +321,8 @@ export default function Crisis() {
       </div>
 
       {/* Talk to someone you trust */}
-      <section className="bg-gray-50 border border-gray-100 rounded-2xl p-5 text-center">
-        <p className="text-sm text-gray-600">
+      <section className="bg-[#EFEAE0] border border-[#12302E]/10 rounded-[20px] p-5 text-center">
+        <p className="text-sm text-[#4A544C]">
           Hotlines aren't the only option. If there's a friend, family member, sponsor, or counselor you
           trust, reaching out to them matters too — you don't have to carry this by yourself.
         </p>

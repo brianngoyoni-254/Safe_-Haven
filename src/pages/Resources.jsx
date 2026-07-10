@@ -1291,7 +1291,7 @@ const LIBRARY_TOPICS = [
     id: "relapse",
     label: "Relapse Prevention & Coping Skills",
     Icon: RefreshCcw,
-    color: "text-teal-600",
+    color: "text-[#0D6E64]",
     bg: "bg-teal-50",
     badge: "bg-teal-50 text-teal-700 border-teal-100",
     blurb: "Practical tools for staying steady through cravings and hard days.",
@@ -1323,7 +1323,7 @@ const LIBRARY_TOPICS = [
     id: "family",
     label: "Family, Relationships & Codependency",
     Icon: Users,
-    color: "text-rose-600",
+    color: "text-[#8a2340]",
     bg: "bg-rose-50",
     badge: "bg-rose-50 text-rose-700 border-rose-100",
     blurb: "Support for rebuilding trust and healthy relationships.",
@@ -1432,7 +1432,7 @@ const VIDEO_LIBRARY = [
     id: "stories",
     label: "Real Recovery Stories",
     Icon: Heart,
-    color: "text-rose-600",
+    color: "text-[#8a2340]",
     bg: "bg-rose-50",
     badge: "bg-rose-50 text-rose-700 border-rose-100",
     blurb: "First-hand accounts from people who've walked this road.",
@@ -1467,7 +1467,7 @@ const VIDEO_LIBRARY = [
     id: "skills",
     label: "Coping Skills & Mindfulness",
     Icon: Sparkles,
-    color: "text-teal-600",
+    color: "text-[#0D6E64]",
     bg: "bg-teal-50",
     badge: "bg-teal-50 text-teal-700 border-teal-100",
     blurb: "Practical tools for cravings, shame, and staying grounded.",
@@ -1661,6 +1661,8 @@ function FlyTo({ position, zoom }) {
   return null;
 }
 
+const serif = { fontFamily: "'Fraunces', serif" };
+
 export default function Resources() {
   const [activeSection, setActiveSection] = useState("centers"); // "centers" | "library" | "videos"
   const [libraryTopic, setLibraryTopic] = useState("All");
@@ -1814,46 +1816,48 @@ export default function Resources() {
   }, [videoTopic, videoSearch]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-5">
+    <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Resources</h1>
-        <p className="text-gray-500 text-sm mt-1">
+        <h1 className="text-[28px] leading-tight font-medium text-[#12302E] tracking-tight" style={serif}>
+          Resources
+        </h1>
+        <p className="text-[#4A544C] text-sm mt-1.5">
           Find treatment centers near you, read trusted recovery literature, or watch curated
           videos — whichever fits how you like to learn.
         </p>
       </div>
 
       {/* Section tabs */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2 flex-wrap bg-[#EFEAE0] p-1.5 rounded-2xl w-fit">
         <button
           onClick={() => setActiveSection("centers")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer
             ${
               activeSection === "centers"
-                ? "border-teal-600 text-teal-700"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "bg-[#F7F4EC] text-[#0D6E64] shadow-sm"
+                : "text-[#4A544C] hover:text-[#12302E]"
             }`}
         >
           <MapIcon className="w-4 h-4" /> Treatment Center Map
         </button>
         <button
           onClick={() => setActiveSection("library")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer
             ${
               activeSection === "library"
-                ? "border-teal-600 text-teal-700"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "bg-[#F7F4EC] text-[#0D6E64] shadow-sm"
+                : "text-[#4A544C] hover:text-[#12302E]"
             }`}
         >
           <BookOpen className="w-4 h-4" /> Recovery Reading Library
         </button>
         <button
           onClick={() => setActiveSection("videos")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer
             ${
               activeSection === "videos"
-                ? "border-teal-600 text-teal-700"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "bg-[#F7F4EC] text-[#0D6E64] shadow-sm"
+                : "text-[#4A544C] hover:text-[#12302E]"
             }`}
         >
           <Film className="w-4 h-4" /> Video Library
@@ -1865,22 +1869,22 @@ export default function Resources() {
       {/* Search + filters + locate */}
       <div className="flex gap-3 flex-wrap items-center">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A544C]/70" />
           <input
             type="text"
             placeholder="Search by name, county, or type..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700
-              focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-shadow"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#12302E]/15 text-sm text-[#12302E]
+              focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-shadow"
           />
         </div>
 
         <select
           value={regionFilter}
           onChange={(e) => setRegionFilter(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 bg-white
-            focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent cursor-pointer"
+          className="px-3 py-2 rounded-lg border border-[#12302E]/15 text-sm text-[#4A544C] bg-white
+            focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent cursor-pointer"
         >
           {REGIONS.map((r) => (
             <option key={r} value={r}>
@@ -1897,8 +1901,8 @@ export default function Resources() {
               className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer
                 ${
                   typeFilter === t
-                    ? "bg-teal-600 text-white border-teal-600"
-                    : "bg-white border-gray-200 text-gray-500 hover:border-teal-300"
+                    ? "bg-[#0D6E64] text-white border-[#0D6E64]"
+                    : "bg-[#F7F4EC] border-[#12302E]/15 text-[#4A544C] hover:border-[#0D6E64]/40"
                 }`}
             >
               {t}
@@ -1912,8 +1916,8 @@ export default function Resources() {
             onChange={(e) =>
               setMaxDistanceKm(e.target.value === "all" ? null : Number(e.target.value))
             }
-            className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 bg-white
-              focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent cursor-pointer"
+            className="px-3 py-2 rounded-lg border border-[#12302E]/15 text-sm text-[#4A544C] bg-white
+              focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent cursor-pointer"
           >
             <option value="25">Within 25 km</option>
             <option value="50">Within 50 km</option>
@@ -1926,8 +1930,8 @@ export default function Resources() {
         <button
           onClick={handleUseMyLocation}
           disabled={locating}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white bg-teal-600
-            hover:bg-teal-500 active:scale-[0.98] transition-all duration-150 cursor-pointer
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white bg-[#0D6E64]
+            hover:brightness-110 active:scale-[0.98] transition-all duration-150 cursor-pointer
             disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <LocateFixed className="w-4 h-4" />
@@ -1937,8 +1941,8 @@ export default function Resources() {
         {userLocation && (
           <button
             onClick={handleClearLocation}
-            className="px-3 py-2 rounded-lg text-sm font-medium text-gray-500 bg-gray-100
-              hover:bg-gray-200 transition-colors cursor-pointer"
+            className="px-3 py-2 rounded-lg text-sm font-medium text-[#4A544C] bg-[#EFEAE0]
+              hover:bg-[#12302E]/10 transition-colors cursor-pointer"
           >
             Clear
           </button>
@@ -1946,13 +1950,13 @@ export default function Resources() {
       </div>
 
       {locationError && (
-        <p className="text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
+        <p className="text-sm text-[#8a2340] bg-[#FCE7EF] border border-[#8a2340]/15 rounded-lg px-3 py-2">
           {locationError}
         </p>
       )}
 
       {userLocation && !locationError && (
-        <p className="text-sm text-teal-700 bg-teal-50 border border-teal-100 rounded-lg px-3 py-2">
+        <p className="text-sm text-[#0D6E64] bg-[#D8E8E4] border border-[#0D6E64]/15 rounded-lg px-3 py-2">
           Showing centers {maxDistanceKm ? `within ${maxDistanceKm} km of` : "sorted by distance from"} your location.
         </p>
       )}
@@ -1961,7 +1965,7 @@ export default function Resources() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
         {/* Map */}
         <div className="lg:col-span-3">
-          <div className="h-[460px] rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+          <div className="h-[460px] rounded-2xl overflow-hidden border border-[#12302E]/10 shadow-sm">
             <MapContainer
               center={KENYA_CENTER}
               zoom={KENYA_DEFAULT_ZOOM}
@@ -2010,11 +2014,11 @@ export default function Resources() {
                 >
                   <Popup>
                     <div className="text-sm space-y-1 min-w-[180px]">
-                      <p className="font-semibold text-gray-900">{r.name}</p>
-                      <p className="text-gray-500 text-xs">{r.address}</p>
-                      <p className="text-gray-400 text-xs">{r.county} County</p>
+                      <p className="font-semibold text-[#12302E]">{r.name}</p>
+                      <p className="text-[#4A544C] text-xs">{r.address}</p>
+                      <p className="text-[#4A544C]/70 text-xs">{r.county} County</p>
                       {r.distanceKm !== null && (
-                        <p className="text-teal-700 text-xs font-medium">
+                        <p className="text-[#0D6E64] text-xs font-medium">
                           {r.distanceKm.toFixed(0)} km away
                         </p>
                       )}
@@ -2022,7 +2026,7 @@ export default function Resources() {
                         {r.phone && (
                           <a
                             href={`tel:${r.phone}`}
-                            className="text-xs font-medium text-teal-700 underline"
+                            className="text-xs font-medium text-[#0D6E64] underline"
                           >
                             Call
                           </a>
@@ -2031,7 +2035,7 @@ export default function Resources() {
                           href={directionsUrl(r, userLocation)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs font-medium text-teal-700 underline"
+                          className="text-xs font-medium text-[#0D6E64] underline"
                         >
                           Directions
                         </a>
@@ -2040,7 +2044,7 @@ export default function Resources() {
                             href={r.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs font-medium text-teal-700 underline"
+                            className="text-xs font-medium text-[#0D6E64] underline"
                           >
                             Website
                           </a>
@@ -2061,7 +2065,7 @@ export default function Resources() {
                   className="w-2.5 h-2.5 rounded-full inline-block"
                   style={{ background: color }}
                 />
-                <span className="text-xs text-gray-500">{type}</span>
+                <span className="text-xs text-[#4A544C]">{type}</span>
               </div>
             ))}
           </div>
@@ -2069,14 +2073,14 @@ export default function Resources() {
 
         {/* List */}
         <div className="lg:col-span-2 space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
-          <p className="text-xs text-gray-500">{filtered.length} resources found</p>
+          <p className="text-xs text-[#4A544C]">{filtered.length} resources found</p>
 
           {filtered.map((r) => (
             <div key={r.id} ref={(el) => (listRefs.current[r.id] = el)}>
               <button
                 onClick={() => handleSelect(r)}
-                className={`w-full text-left bg-white rounded-2xl border shadow-sm p-4 transition-colors cursor-pointer
-                  ${selected === r.id ? "border-teal-300 bg-teal-50/40" : "border-gray-100 hover:border-teal-200"}`}
+                className={`w-full text-left bg-[#F7F4EC] rounded-[20px] border shadow-sm p-4 transition-colors cursor-pointer
+                  ${selected === r.id ? "border-[#0D6E64]/40 bg-[#D8E8E4]/40" : "border-[#12302E]/10 hover:border-[#0D6E64]/30"}`}
               >
                 <div className="flex items-start gap-2 mb-1.5">
                   <div
@@ -2084,31 +2088,31 @@ export default function Resources() {
                     style={{ background: TYPE_COLOR[r.type] ?? "#0d9488" }}
                   />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 text-sm leading-tight">{r.name}</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">{r.county} County · {r.region}</p>
+                    <h3 className="font-semibold text-[#12302E] text-sm leading-tight">{r.name}</h3>
+                    <p className="text-xs text-[#4A544C]/70 mt-0.5">{r.county} County · {r.region}</p>
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       <span className={`text-xs px-1.5 py-0.5 rounded-full border ${TYPE_BADGE[r.type]}`}>
                         {r.type}
                       </span>
                       {r.distanceKm !== null && (
-                        <span className="text-xs text-gray-500">{r.distanceKm.toFixed(0)} km</span>
+                        <span className="text-xs text-[#4A544C]">{r.distanceKm.toFixed(0)} km</span>
                       )}
                     </div>
                   </div>
                 </div>
 
                 {selected === r.id && (
-                  <div className="space-y-1.5 pt-2 border-t border-gray-100 mt-2">
-                    <div className="flex items-start gap-1.5 text-xs text-gray-500">
+                  <div className="space-y-1.5 pt-2 border-t border-[#12302E]/10 mt-2">
+                    <div className="flex items-start gap-1.5 text-xs text-[#4A544C]">
                       <MapPin className="w-3 h-3 flex-shrink-0 mt-0.5" /> {r.address}
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <div className="flex items-center gap-1.5 text-xs text-[#4A544C]">
                       <Building2 className="w-3 h-3 flex-shrink-0" /> {r.type}
                     </div>
                     <div className="flex gap-2 pt-1 flex-wrap" onClick={(e) => e.stopPropagation()}>
                       {r.phone && (
                         <a href={`tel:${r.phone}`} className="flex-1 min-w-[110px]">
-                          <span className="flex items-center justify-center gap-1 h-8 rounded-lg text-xs font-medium text-white bg-teal-600 hover:bg-teal-500 transition-colors cursor-pointer">
+                          <span className="flex items-center justify-center gap-1 h-8 rounded-lg text-xs font-medium text-white bg-[#0D6E64] hover:brightness-110 transition-colors cursor-pointer">
                             <Phone className="w-3 h-3" /> {r.phone}
                           </span>
                         </a>
@@ -2119,13 +2123,13 @@ export default function Resources() {
                         rel="noopener noreferrer"
                         className="flex-1 min-w-[110px]"
                       >
-                        <span className="flex items-center justify-center gap-1 h-8 rounded-lg text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors cursor-pointer">
+                        <span className="flex items-center justify-center gap-1 h-8 rounded-lg text-xs font-medium text-[#0D6E64] bg-[#D8E8E4] hover:bg-[#D8E8E4]/70 transition-colors cursor-pointer">
                           <Navigation className="w-3 h-3" /> Directions
                         </span>
                       </a>
                       {r.website && (
                         <a href={r.website} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[110px]">
-                          <span className="flex items-center justify-center gap-1 h-8 rounded-lg text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors cursor-pointer">
+                          <span className="flex items-center justify-center gap-1 h-8 rounded-lg text-xs font-medium text-[#0D6E64] bg-[#D8E8E4] hover:bg-[#D8E8E4]/70 transition-colors cursor-pointer">
                             <Globe className="w-3 h-3" /> Website
                           </span>
                         </a>
@@ -2138,12 +2142,12 @@ export default function Resources() {
           ))}
 
           {filtered.length === 0 && (
-            <div className="text-sm text-gray-400 italic px-1 py-6 text-center space-y-2">
+            <div className="text-sm text-[#4A544C]/70 italic px-1 py-6 text-center space-y-2">
               <p>No resources match your search.</p>
               {userLocation && maxDistanceKm && (
                 <button
                   onClick={() => setMaxDistanceKm(null)}
-                  className="text-teal-600 not-italic font-medium underline cursor-pointer"
+                  className="text-[#0D6E64] not-italic font-medium underline cursor-pointer"
                 >
                   Try showing all of Kenya instead
                 </button>
@@ -2154,18 +2158,18 @@ export default function Resources() {
       </div>
 
       {/* National helpline callout */}
-      <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center gap-4 flex-wrap">
-        <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center flex-shrink-0">
-          <Heart className="w-5 h-5 text-rose-500" />
+      <div className="bg-[#FCE7EF] border border-[#c2417a]/25 rounded-2xl p-4 flex items-center gap-4 flex-wrap">
+        <div className="w-10 h-10 rounded-xl bg-[#c2417a]/15 flex items-center justify-center flex-shrink-0">
+          <Heart className="w-5 h-5 text-[#c2417a]" />
         </div>
         <div className="flex-1 min-w-[200px]">
-          <p className="font-semibold text-rose-800 text-sm">NACADA National Helpline</p>
-          <p className="text-xs text-rose-600">
+          <p className="font-semibold text-[#8a2340] text-sm">NACADA National Helpline</p>
+          <p className="text-xs text-[#8a2340]">
             Free, confidential, 24/7 counseling and referrals — call 1192 via Safaricom or Telkom.
           </p>
         </div>
         <a href="tel:1192">
-          <span className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white bg-rose-500 hover:bg-rose-600 transition-colors cursor-pointer">
+          <span className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white bg-[#c2417a] hover:brightness-110 transition-colors cursor-pointer">
             <Phone className="w-3.5 h-3.5" /> Call 1192
           </span>
         </a>
@@ -2176,9 +2180,9 @@ export default function Resources() {
       {activeSection === "library" && (
         <div className="space-y-5">
           {/* Trust banner */}
-          <div className="flex items-start gap-3 bg-teal-50/60 border border-teal-100 rounded-2xl p-4">
-            <ShieldCheck className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-600">
+          <div className="flex items-start gap-3 bg-[#D8E8E4]/50 border border-[#0D6E64]/15 rounded-2xl p-4">
+            <ShieldCheck className="w-5 h-5 text-[#0D6E64] flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-[#4A544C]">
               Every item below comes from an established public-health body, hospital
               foundation, or long-running peer-support fellowship — never a random blog. Safe
               Haven doesn't host this material; each card links out to the publisher's own site.
@@ -2188,14 +2192,14 @@ export default function Resources() {
           {/* Search + topic filter */}
           <div className="flex gap-3 flex-wrap items-center">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A544C]/70" />
               <input
                 type="text"
                 placeholder="Search readings by title or topic..."
                 value={librarySearch}
                 onChange={(e) => setLibrarySearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700
-                  focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-shadow"
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#12302E]/15 text-sm text-[#12302E]
+                  focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-shadow"
               />
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -2204,8 +2208,8 @@ export default function Resources() {
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer
                   ${
                     libraryTopic === "All"
-                      ? "bg-teal-600 text-white border-teal-600"
-                      : "bg-white border-gray-200 text-gray-500 hover:border-teal-300"
+                      ? "bg-[#0D6E64] text-white border-[#0D6E64]"
+                      : "bg-[#F7F4EC] border-[#12302E]/15 text-[#4A544C] hover:border-[#0D6E64]/40"
                   }`}
               >
                 All topics
@@ -2217,8 +2221,8 @@ export default function Resources() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer
                     ${
                       libraryTopic === topic.id
-                        ? "bg-teal-600 text-white border-teal-600"
-                        : "bg-white border-gray-200 text-gray-500 hover:border-teal-300"
+                        ? "bg-[#0D6E64] text-white border-[#0D6E64]"
+                        : "bg-[#F7F4EC] border-[#12302E]/15 text-[#4A544C] hover:border-[#0D6E64]/40"
                     }`}
                 >
                   <topic.Icon className="w-3.5 h-3.5" /> {topic.label}
@@ -2229,7 +2233,7 @@ export default function Resources() {
 
           {/* Topic sections */}
           {filteredLibrary.length === 0 && (
-            <div className="text-sm text-gray-400 italic px-1 py-10 text-center">
+            <div className="text-sm text-[#4A544C]/70 italic px-1 py-10 text-center">
               No readings match your search.
             </div>
           )}
@@ -2237,15 +2241,15 @@ export default function Resources() {
           {filteredLibrary.map((topic) => (
             <section
               key={topic.id}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+              className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5"
             >
               <div className="flex items-center gap-3 mb-1">
                 <div className={`w-10 h-10 rounded-xl ${topic.bg} flex items-center justify-center flex-shrink-0`}>
                   <topic.Icon className={`w-5 h-5 ${topic.color}`} />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900">{topic.label}</h2>
-                  <p className="text-xs text-gray-500">{topic.blurb}</p>
+                  <h2 className="font-semibold text-[#12302E] tracking-tight">{topic.label}</h2>
+                  <p className="text-xs text-[#4A544C]">{topic.blurb}</p>
                 </div>
               </div>
 
@@ -2256,21 +2260,21 @@ export default function Resources() {
                     href={r.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group rounded-xl border border-gray-100 p-4 hover:border-teal-200 hover:shadow-sm transition-all cursor-pointer flex flex-col"
+                    className="group rounded-xl border border-[#12302E]/10 p-4 hover:border-[#0D6E64]/30 hover:shadow-sm transition-all cursor-pointer flex flex-col"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <h3 className="font-semibold text-gray-900 text-sm leading-snug">
+                      <h3 className="font-semibold text-[#12302E] text-sm leading-snug">
                         {r.title}
                       </h3>
-                      <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover:text-teal-500 flex-shrink-0 mt-0.5 transition-colors" />
+                      <ExternalLink className="w-3.5 h-3.5 text-[#4A544C]/40 group-hover:text-[#0D6E64] flex-shrink-0 mt-0.5 transition-colors" />
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap mb-2">
                       <span className={`text-xs px-1.5 py-0.5 rounded-full border ${topic.badge}`}>
                         {r.format}
                       </span>
-                      <span className="text-xs text-gray-400">{r.publisher}</span>
+                      <span className="text-xs text-[#4A544C]/70">{r.publisher}</span>
                     </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">{r.desc}</p>
+                    <p className="text-xs text-[#4A544C] leading-relaxed">{r.desc}</p>
                   </a>
                 ))}
               </div>
@@ -2278,14 +2282,14 @@ export default function Resources() {
           ))}
 
           {/* Reassurance footer */}
-          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex items-start gap-3">
-            <Sparkles className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-600">
+          <div className="bg-[#EFEAE0] border border-[#12302E]/10 rounded-2xl p-5 flex items-start gap-3">
+            <Sparkles className="w-5 h-5 text-[#0D6E64] flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-[#4A544C]">
               Reading can help you understand your journey, but it isn't a substitute for
               treatment or crisis support. If you're struggling right now, visit{" "}
-              <span className="font-medium text-gray-800">Crisis Support</span> or call the
+              <span className="font-medium text-[#12302E]">Crisis Support</span> or call the
               NACADA National Helpline on{" "}
-              <a href="tel:1192" className="text-teal-600 font-medium underline">
+              <a href="tel:1192" className="text-[#0D6E64] font-medium underline">
                 1192
               </a>
               .
@@ -2297,9 +2301,9 @@ export default function Resources() {
       {activeSection === "videos" && (
         <div className="space-y-5">
           {/* Trust banner */}
-          <div className="flex items-start gap-3 bg-teal-50/60 border border-teal-100 rounded-2xl p-4">
-            <ShieldCheck className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-600">
+          <div className="flex items-start gap-3 bg-[#D8E8E4]/50 border border-[#0D6E64]/15 rounded-2xl p-4">
+            <ShieldCheck className="w-5 h-5 text-[#0D6E64] flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-[#4A544C]">
               For anyone who'd rather watch than read. Every video comes from an established
               organization — TED, an academic research center, a government health agency, or a
               recognized recovery non-profit — and plays on its original platform. Safe Haven
@@ -2310,14 +2314,14 @@ export default function Resources() {
           {/* Search + topic filter */}
           <div className="flex gap-3 flex-wrap items-center">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A544C]/70" />
               <input
                 type="text"
                 placeholder="Search videos by title or topic..."
                 value={videoSearch}
                 onChange={(e) => setVideoSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700
-                  focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-shadow"
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#12302E]/15 text-sm text-[#12302E]
+                  focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-shadow"
               />
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -2326,8 +2330,8 @@ export default function Resources() {
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer
                   ${
                     videoTopic === "All"
-                      ? "bg-teal-600 text-white border-teal-600"
-                      : "bg-white border-gray-200 text-gray-500 hover:border-teal-300"
+                      ? "bg-[#0D6E64] text-white border-[#0D6E64]"
+                      : "bg-[#F7F4EC] border-[#12302E]/15 text-[#4A544C] hover:border-[#0D6E64]/40"
                   }`}
               >
                 All topics
@@ -2339,8 +2343,8 @@ export default function Resources() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer
                     ${
                       videoTopic === topic.id
-                        ? "bg-teal-600 text-white border-teal-600"
-                        : "bg-white border-gray-200 text-gray-500 hover:border-teal-300"
+                        ? "bg-[#0D6E64] text-white border-[#0D6E64]"
+                        : "bg-[#F7F4EC] border-[#12302E]/15 text-[#4A544C] hover:border-[#0D6E64]/40"
                     }`}
                 >
                   <topic.Icon className="w-3.5 h-3.5" /> {topic.label}
@@ -2351,7 +2355,7 @@ export default function Resources() {
 
           {/* Topic sections */}
           {filteredVideos.length === 0 && (
-            <div className="text-sm text-gray-400 italic px-1 py-10 text-center">
+            <div className="text-sm text-[#4A544C]/70 italic px-1 py-10 text-center">
               No videos match your search.
             </div>
           )}
@@ -2359,15 +2363,15 @@ export default function Resources() {
           {filteredVideos.map((topic) => (
             <section
               key={topic.id}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+              className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5"
             >
               <div className="flex items-center gap-3 mb-1">
                 <div className={`w-10 h-10 rounded-xl ${topic.bg} flex items-center justify-center flex-shrink-0`}>
                   <topic.Icon className={`w-5 h-5 ${topic.color}`} />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900">{topic.label}</h2>
-                  <p className="text-xs text-gray-500">{topic.blurb}</p>
+                  <h2 className="font-semibold text-[#12302E] tracking-tight">{topic.label}</h2>
+                  <p className="text-xs text-[#4A544C]">{topic.blurb}</p>
                 </div>
               </div>
 
@@ -2378,25 +2382,25 @@ export default function Resources() {
                     href={v.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group rounded-xl border border-gray-100 p-4 hover:border-teal-200 hover:shadow-sm transition-all cursor-pointer flex flex-col"
+                    className="group rounded-xl border border-[#12302E]/10 p-4 hover:border-[#0D6E64]/30 hover:shadow-sm transition-all cursor-pointer flex flex-col"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <h3 className="font-semibold text-gray-900 text-sm leading-snug flex items-start gap-1.5">
-                        <PlayCircle className="w-4 h-4 text-teal-500 flex-shrink-0 mt-0.5" />
+                      <h3 className="font-semibold text-[#12302E] text-sm leading-snug flex items-start gap-1.5">
+                        <PlayCircle className="w-4 h-4 text-[#0D6E64] flex-shrink-0 mt-0.5" />
                         <span>{v.title}</span>
                       </h3>
-                      <ExternalLink className="w-3.5 h-3.5 text-gray-300 group-hover:text-teal-500 flex-shrink-0 mt-0.5 transition-colors" />
+                      <ExternalLink className="w-3.5 h-3.5 text-[#4A544C]/40 group-hover:text-[#0D6E64] flex-shrink-0 mt-0.5 transition-colors" />
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap mb-2 ml-[22px]">
                       <span className={`text-xs px-1.5 py-0.5 rounded-full border ${topic.badge}`}>
                         {v.format}
                       </span>
-                      <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <span className="text-xs text-[#4A544C]/70 flex items-center gap-1">
                         <Clock className="w-3 h-3" /> {v.duration}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 ml-[22px] mb-1">{v.publisher}</p>
-                    <p className="text-xs text-gray-500 leading-relaxed ml-[22px]">{v.desc}</p>
+                    <p className="text-xs text-[#4A544C]/70 ml-[22px] mb-1">{v.publisher}</p>
+                    <p className="text-xs text-[#4A544C] leading-relaxed ml-[22px]">{v.desc}</p>
                   </a>
                 ))}
               </div>
@@ -2404,15 +2408,15 @@ export default function Resources() {
           ))}
 
           {/* Reassurance footer */}
-          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex items-start gap-3">
-            <HeartHandshake className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-600">
+          <div className="bg-[#EFEAE0] border border-[#12302E]/10 rounded-2xl p-5 flex items-start gap-3">
+            <HeartHandshake className="w-5 h-5 text-[#0D6E64] flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-[#4A544C]">
               Videos can help you feel less alone and better understand what you're going
               through, but they aren't a substitute for treatment or crisis support. If you're
               struggling right now, visit{" "}
-              <span className="font-medium text-gray-800">Crisis Support</span> or call the
+              <span className="font-medium text-[#12302E]">Crisis Support</span> or call the
               NACADA National Helpline on{" "}
-              <a href="tel:1192" className="text-teal-600 font-medium underline">
+              <a href="tel:1192" className="text-[#0D6E64] font-medium underline">
                 1192
               </a>
               .

@@ -17,15 +17,19 @@ import {
 // getTodayCheckIn() -> GET /api/checkins/today  -> { mood, cravingLevel, soberToday, notes } | null
 // submitCheckIn(payload) -> POST /api/checkins  -> saved check-in record
 
+
+
+const serif = { fontFamily: "'Fraunces', serif" };
+
 const MOOD_LABELS = ["", "Very low", "Low", "Neutral", "Good", "Great"];
 const CRAVING_LABELS = ["", "None", "Mild", "Moderate", "Strong", "Intense"];
 
-// Mood: low -> high mapped onto a rose -> teal scale (matches the app's teal identity)
-const MOOD_COLORS = ["", "bg-rose-500", "bg-orange-400", "bg-amber-400", "bg-lime-500", "bg-teal-500"];
+// Mood: low -> high mapped onto a rose -> gold -> teal scale (brand palette)
+const MOOD_COLORS = ["", "#c2417a", "#d18a4f", "#C98A3E", "#4a9b7f", "#0D6E64"];
 // Craving: inverted — low craving is "good" (teal), high craving is "hard" (rose)
-const CRAVING_COLORS = ["", "bg-teal-500", "bg-lime-500", "bg-amber-400", "bg-orange-400", "bg-rose-500"];
+const CRAVING_COLORS = ["", "#0D6E64", "#4a9b7f", "#C98A3E", "#d18a4f", "#c2417a"];
 
-function ScaleSelector({ value, onChange, colors, labels, activeRing }) {
+function ScaleSelector({ value, onChange, colors, labels }) {
   return (
     <div>
       <div className="flex gap-2">
@@ -36,19 +40,19 @@ function ScaleSelector({ value, onChange, colors, labels, activeRing }) {
             aria-pressed={value === v}
             aria-label={`${labels[v]} (${v} of 5)`}
             onClick={() => onChange(v)}
-            className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${activeRing}
-              ${
-                value === v
-                  ? `${colors[v]} text-white scale-105 shadow-md`
-                  : "bg-gray-100 text-gray-400 hover:bg-gray-200"
-              }`}
+            className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D6E64] focus-visible:ring-offset-2"
+            style={
+              value === v
+                ? { background: colors[v], color: "#F7F4EC", transform: "scale(1.05)", boxShadow: "0 2px 8px rgba(18,48,46,0.18)" }
+                : { background: "#EFEAE0", color: "#4A544C" }
+            }
           >
             {v}
           </button>
         ))}
       </div>
-      <p className="text-center text-sm text-gray-500 mt-2">{labels[value]}</p>
+      <p className="text-center text-sm text-[#4A544C] mt-2">{labels[value]}</p>
     </div>
   );
 }
@@ -89,24 +93,28 @@ export default function CheckIn() {
 
   if (isSaved) {
     return (
-      <div className="max-w-xl mx-auto py-12 text-center">
-        <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-8 h-8 text-teal-600" />
+      <div className="max-w-xl mx-auto py-16 text-center">
+        <div className="w-16 h-16 rounded-full bg-[#D8E8E4] flex items-center justify-center mx-auto mb-5">
+          <CheckCircle2 className="w-8 h-8 text-[#0D6E64]" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">You're checked in</h1>
-        <p className="text-gray-500 mb-8">
+        <h1 className="text-2xl font-medium text-[#12302E] tracking-tight mb-2" style={serif}>
+          You're checked in
+        </h1>
+        <p className="text-[#4A544C] mb-9">
           Nice work{user?.username ? `, ${user.username}` : ""}. Showing up today counts.
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
           <button
             onClick={() => setIsSaved(false)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-[#12302E]
+              bg-[#EFEAE0] hover:bg-[#12302E]/10 transition-colors cursor-pointer"
           >
             <Pencil size={16} /> Edit check-in
           </button>
           <button
             onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-teal-600 hover:bg-teal-500 transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-[#F7F4EC] bg-[#0D6E64]
+              shadow-sm hover:brightness-110 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 cursor-pointer"
           >
             Back to dashboard <ArrowRight size={16} />
           </button>
@@ -119,26 +127,28 @@ export default function CheckIn() {
     <div className="max-w-xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Daily check-in</h1>
-        <p className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">
-          <Calendar size={14} /> {today}
+        <h1 className="text-[28px] leading-tight font-medium text-[#12302E] tracking-tight" style={serif}>
+          Daily check-in
+        </h1>
+        <p className="flex items-center gap-1.5 text-sm text-[#4A544C] mt-1.5">
+          <Calendar size={14} className="text-[#4A544C]/60" /> {today}
         </p>
       </div>
 
       {/* Sober today */}
-      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h2 className="text-base font-semibold text-gray-900 mb-3">Were you sober today?</h2>
+      <section className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5">
+        <h2 className="text-base font-semibold text-[#12302E] mb-3 tracking-tight">Were you sober today?</h2>
         <div className="flex gap-3">
           <button
             type="button"
             aria-pressed={soberToday}
             onClick={() => setSoberToday(true)}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all cursor-pointer font-medium text-sm
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0D6E64] focus-visible:ring-offset-2
               ${
                 soberToday
-                  ? "border-teal-500 bg-teal-50 text-teal-700"
-                  : "border-gray-200 text-gray-500 hover:border-teal-300"
+                  ? "border-[#0D6E64] bg-[#D8E8E4] text-[#0D6E64]"
+                  : "border-[#12302E]/10 text-[#4A544C] hover:border-[#0D6E64]/40"
               }`}
           >
             <CheckCircle2 className="w-4 h-4" /> Yes, I was sober
@@ -148,66 +158,55 @@ export default function CheckIn() {
             aria-pressed={!soberToday}
             onClick={() => setSoberToday(false)}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all cursor-pointer font-medium text-sm
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c2417a] focus-visible:ring-offset-2
               ${
                 !soberToday
-                  ? "border-rose-400 bg-rose-50 text-rose-600"
-                  : "border-gray-200 text-gray-500 hover:border-rose-300"
+                  ? "border-[#c2417a] bg-[#FCE7EF] text-[#c2417a]"
+                  : "border-[#12302E]/10 text-[#4A544C] hover:border-[#c2417a]/40"
               }`}
           >
             <XCircle className="w-4 h-4" /> No
           </button>
         </div>
         {!soberToday && (
-          <p className="text-sm text-gray-500 mt-3 p-3 bg-gray-50 rounded-lg">
+          <p className="text-sm text-[#4A544C] mt-3 p-3 bg-[#EFEAE0] rounded-lg">
             That's okay. Recovery isn't linear — tomorrow is a new opportunity.
           </p>
         )}
       </section>
 
       {/* Mood */}
-      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h2 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Heart className="w-4 h-4 text-rose-500" /> How is your mood?
+      <section className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5">
+        <h2 className="text-base font-semibold text-[#12302E] mb-3 flex items-center gap-2 tracking-tight">
+          <Heart className="w-4 h-4 text-[#c2417a]" /> How is your mood?
         </h2>
-        <ScaleSelector
-          value={mood}
-          onChange={setMood}
-          colors={MOOD_COLORS}
-          labels={MOOD_LABELS}
-          activeRing="focus-visible:ring-teal-500"
-        />
+        <ScaleSelector value={mood} onChange={setMood} colors={MOOD_COLORS} labels={MOOD_LABELS} />
       </section>
 
       {/* Craving */}
-      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h2 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Zap className="w-4 h-4 text-amber-500" /> Craving level?
+      <section className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5">
+        <h2 className="text-base font-semibold text-[#12302E] mb-3 flex items-center gap-2 tracking-tight">
+          <Zap className="w-4 h-4 text-[#C98A3E]" /> Craving level?
         </h2>
-        <ScaleSelector
-          value={craving}
-          onChange={setCraving}
-          colors={CRAVING_COLORS}
-          labels={CRAVING_LABELS}
-          activeRing="focus-visible:ring-amber-500"
-        />
+        <ScaleSelector value={craving} onChange={setCraving} colors={CRAVING_COLORS} labels={CRAVING_LABELS} />
       </section>
 
       {/* Notes */}
-      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h2 className="text-base font-semibold text-gray-900 mb-3">Notes (optional)</h2>
+      <section className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5">
+        <h2 className="text-base font-semibold text-[#12302E] mb-3 tracking-tight">Notes (optional)</h2>
         <textarea
           placeholder="How are you feeling? What helped today? Any challenges?"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
-          className="w-full resize-none rounded-xl border border-gray-200 p-3 text-sm text-gray-800 placeholder:text-gray-400
-            focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-shadow"
+          className="w-full resize-none rounded-xl border border-[#12302E]/15 p-3 text-sm text-[#12302E]
+            placeholder-[#4A544C]/40 bg-white
+            focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-shadow"
         />
       </section>
 
       {error && (
-        <p className="text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
+        <p className="text-sm text-[#8a2340] bg-[#FCE7EF] border border-[#8a2340]/15 rounded-xl px-3.5 py-2.5">
           {error}
         </p>
       )}
@@ -216,9 +215,9 @@ export default function CheckIn() {
       <button
         onClick={handleSubmit}
         disabled={isSaving}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white bg-teal-600
-          hover:bg-teal-500 active:scale-[0.99] transition-all duration-150 cursor-pointer
-          disabled:opacity-70 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-white bg-[#0D6E64]
+          hover:brightness-110 hover:shadow-lg active:scale-[0.99] transition-all duration-150 cursor-pointer
+          disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {isSaving ? (
           <>
