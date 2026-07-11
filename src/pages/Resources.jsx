@@ -1156,10 +1156,10 @@ const REGIONS = [
 const TYPES = ["All", "Residential", "Outpatient", "Counseling", "Public"];
 
 const TYPE_COLOR = {
-  Residential: "#0d9488", // teal-600
-  Outpatient: "#059669", // emerald-600
-  Counseling: "#0891b2", // cyan-600
-  Public: "#7c3aed", // violet-600
+  Residential: "#0d9488", 
+  Outpatient: "#059669", 
+  Counseling: "#0891b2", 
+  Public: "#7c3aed", 
 };
 
 const TYPE_BADGE = {

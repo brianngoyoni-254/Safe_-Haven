@@ -17,7 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-// TODO(backend): replace all mock logic below with real API calls, e.g.
+// TODO(backend): we will replace all mock logic below with real API calls, e.g.
 //   import { listJournalEntries, createJournalEntry, updateJournalEntry, deleteJournalEntry } from "../api";
 // listJournalEntries()          -> GET    /api/journal            -> [{ id, title, content, mood, tags, updatedAt }]
 // createJournalEntry(payload)   -> POST   /api/journal            -> created entry
