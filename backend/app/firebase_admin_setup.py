@@ -1,4 +1,3 @@
-
 import os
 
 import firebase_admin
@@ -7,16 +6,22 @@ from firebase_admin import credentials, auth as firebase_auth
 _firebase_app = None
 _init_error = None
 
+# Resolve a sensible default path relative to this file, so it doesn't
+# break depending on where run.py is launched from.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_CRED_PATH = os.path.join(BASE_DIR, "secrets", "firebase-adminsdk.json")
+
 
 def _init():
     global _firebase_app, _init_error
     if _firebase_app is not None or _init_error is not None:
         return
 
-    cred_path = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")
+    cred_path = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH", DEFAULT_CRED_PATH)
+
     if not cred_path or not os.path.exists(cred_path):
         _init_error = (
-            
+            f"FIREBASE_SERVICE_ACCOUNT_PATH not set or file not found: {cred_path!r}"
         )
         return
 
