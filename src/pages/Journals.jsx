@@ -23,7 +23,7 @@ import {
 // createJournalEntry(payload)   -> POST   /api/journal            -> created entry
 // updateJournalEntry(id, patch) -> PATCH  /api/journal/:id        -> updated entry
 // deleteJournalEntry(id)        -> DELETE /api/journal/:id        -> { success: true }
-// Entries below are seeded client-side only and are lost on refresh.
+
 
 
 const serif = { fontFamily: "'Fraunces', serif" };
