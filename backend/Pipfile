@@ -4,12 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-flask = "*"
-flask-cors = "*"
 firebase-admin = "*"
 pyjwt = "*"
 werkzeug = "*"
-python-dotenv = "*"
 
 [dev-packages]
 
