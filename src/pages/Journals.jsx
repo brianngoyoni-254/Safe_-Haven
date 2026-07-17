@@ -28,6 +28,9 @@ import {
 
 const serif = { fontFamily: "'Fraunces', serif" };
 
+
+const serif = { fontFamily: "'Fraunces', serif" };
+
 const MOOD_OPTIONS = [
   { value: 1, label: "Very Low", Icon: Frown, color: "#c2417a", bg: "#FCE7EF" },
   { value: 2, label: "Low", Icon: Meh, color: "#d18a4f", bg: "#F6E3D3" },

@@ -433,7 +433,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <p className="text-sm text-[#4A544C]">You have not yet checked in  today. How are you feeling?</p>
+            <p className="text-sm text-[#4A544C]">You haven't checked in yet today. How are you feeling?</p>
             <Link
               to="/check-in"
               className="px-4 py-2.5 rounded-full text-sm font-semibold text-[#F7F4EC] bg-[#0D6E64]
