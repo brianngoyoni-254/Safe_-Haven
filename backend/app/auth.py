@@ -35,8 +35,8 @@ def _set_refresh_cookie(response, refresh_token):
 def _issue_session_response(user):
     """Builds the {user, access_token, expires_in} body AND sets the
     httpOnly refresh cookie on the response."""
-    access_token, expires_in = issue_access_token(user["id"])
-    refresh_token = issue_refresh_token(user["id"])
+    access_token, expires_in = issue_access_token(user.id)
+    refresh_token = issue_refresh_token(user.id)
 
     body = {
         "user": public_user(user),
@@ -79,9 +79,9 @@ def login():
     password = data.get("password") or ""
 
     user = get_user_by_email(email)
-    if not user or not user["password_hash"]:
+    if not user or not user.password_hash:
         return jsonify({"error": "Incorrect email or password"}), 401
-    if not check_password_hash(user["password_hash"], password):
+    if not check_password_hash(user.password_hash, password):
         return jsonify({"error": "Incorrect email or password"}), 401
 
     return _issue_session_response(user)
@@ -144,7 +144,7 @@ def refresh():
     if not user:
         return jsonify({"error": "User not found"}), 401
 
-    access_token, expires_in = issue_access_token(user["id"])
+    access_token, expires_in = issue_access_token(user.id)
     return jsonify({"access_token": access_token, "expires_in": expires_in})
 
 
