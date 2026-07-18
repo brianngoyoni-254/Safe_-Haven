@@ -445,6 +445,31 @@ export default function Dashboard() {
         )}
       </section>
 
+      {/* Support Safe Haven — warm, low-pressure donation nudge.
+          Placed after the core recovery actions (check-in, badges) so it
+          never competes with them, but before quick links so it isn't lost
+          at the very bottom of the page. */}
+      <section className="bg-[#F1DEBC]/45 border border-[#C98A3E]/25 rounded-[20px] p-5 flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-[#F7F4EC] flex items-center justify-center flex-shrink-0 shadow-sm">
+            <Heart className="w-5 h-5 text-[#c2417a]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#12302E] tracking-tight">Enjoying Safe Haven?</p>
+            <p className="text-xs text-[#4A544C] mt-0.5">
+              A small M-Pesa donation helps keep it free for everyone in recovery.
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/donations"
+          className="px-4 py-2.5 rounded-full text-sm font-semibold text-[#12302E] bg-[#C98A3E]
+            shadow-sm hover:brightness-105 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 cursor-pointer flex-shrink-0"
+        >
+          Support us
+        </Link>
+      </section>
+
       {/* Quick links */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {quickLinks.map((link) => (

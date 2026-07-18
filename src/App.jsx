@@ -21,6 +21,7 @@ import Journal      from "./pages/Journals";
 import Resources    from "./pages/Resources";
 import Crisis       from "./pages/Crisis";
 import Profile      from "./pages/Profile";
+import Donations    from "./pages/Donations";
 
 //Layout 
 import Layout from "./components/Layout";
@@ -247,6 +248,7 @@ function AppRoutes() {
           <Route path="/milestones" element={<Milestones />} />
           <Route path="/journal"    element={<Journal    />} />
           <Route path="/resources"  element={<Resources  />} />
+          <Route path="/donations"  element={<Donations  />} />
           <Route path="/profile"    element={<Profile    />} />
         </Route>
 
