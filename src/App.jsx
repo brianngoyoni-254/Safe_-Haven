@@ -26,7 +26,7 @@ import Profile      from "./pages/Profile";
 import Layout from "./components/Layout";
 
 // API 
-import { getMe, refreshToken } from "./api";
+import { getMe, refreshToken, setAuthToken } from "./api";
 
 
 // AUTH CONTEXT
@@ -56,6 +56,7 @@ function AuthProvider({ children }) {
     (async () => {
       try {
         const { access_token, expires_in } = await refreshToken();
+        setAuthToken(access_token);
         const user = await getMe(access_token);
         if (!cancelled) {
           setAuthState({
@@ -82,12 +83,14 @@ function AuthProvider({ children }) {
     const id = setTimeout(async () => {
       try {
         const { access_token, expires_in } = await refreshToken();
+        setAuthToken(access_token);
         setAuthState((prev) => ({
           ...prev,
           token:     access_token,
           expiresAt: Date.now() + expires_in * 1000,
         }));
       } catch {
+        setAuthToken(null);
         setAuthState({ user: null, token: null, expiresAt: null });
       }
     }, delay);
@@ -99,6 +102,7 @@ function AuthProvider({ children }) {
 
   // login – called by AuthPages after a successful /api/auth/firebase response.
   const login = useCallback(({ user, access_token, expires_in }) => {
+    setAuthToken(access_token);
     setAuthState({
       user,
       token:     access_token,
@@ -113,6 +117,7 @@ function AuthProvider({ children }) {
     } catch {
       // Best-effort.
     } finally {
+      setAuthToken(null);
       setAuthState({ user: null, token: null, expiresAt: null });
     }
   }, []);
