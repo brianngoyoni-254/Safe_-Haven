@@ -1,7 +1,16 @@
 from datetime import date as date_cls, timedelta
 
 from .extensions import db
-from .models import User, CheckIn, Milestone
+from .models import (
+    User,
+    CheckIn,
+    Milestone,
+    Resource,
+    LibraryTopic,
+    LibraryReading,
+    VideoTopic,
+    Video,
+)
 
 
 # Users 
@@ -138,4 +147,114 @@ def public_milestone(milestone):
     return {
         "days": milestone.days,
         "achievedAt": milestone.achieved_at.isoformat(),
+    }
+
+
+# Resources 
+
+def list_resources(type_filter=None, region_filter=None, query=None):
+    """Rehab-centre directory, filtered server-side by type/region and a
+    free-text query against name, address, county, and type. Distance-based
+    sorting stays on the frontend since it depends on the user's live
+    (browser) geolocation, not anything the server knows."""
+    q = Resource.query
+
+    if type_filter and type_filter != "All":
+        q = q.filter_by(type=type_filter)
+    if region_filter and region_filter != "All":
+        q = q.filter_by(region=region_filter)
+    if query:
+        like = f"%{query.strip()}%"
+        q = q.filter(
+            db.or_(
+                Resource.name.ilike(like),
+                Resource.address.ilike(like),
+                Resource.county.ilike(like),
+                Resource.type.ilike(like),
+            )
+        )
+
+    return q.order_by(Resource.region, Resource.county, Resource.name).all()
+
+
+def public_resource(resource):
+    """Shape a Resource row for the client, matching the RESOURCES entries
+    the frontend used before this became a real endpoint (Resources.jsx)."""
+    return {
+        "id": resource.id,
+        "name": resource.name,
+        "type": resource.type,
+        "county": resource.county,
+        "region": resource.region,
+        "address": resource.address,
+        "phone": resource.phone,
+        "website": resource.website,
+        "lat": resource.lat,
+        "lng": resource.lng,
+    }
+
+
+# Reading library 
+
+def list_library_topics():
+    """All library topics with their readings, in curated display order."""
+    return LibraryTopic.query.order_by(LibraryTopic.position).all()
+
+
+def public_library_topic(topic):
+    """Shape a LibraryTopic (+ readings) for the client, matching the
+    LIBRARY_TOPICS shape the frontend used before this became a real
+    endpoint. `icon` is a lucide-react icon name resolved to a component
+    client-side, since components can't be stored in the database."""
+    return {
+        "id": topic.id,
+        "label": topic.label,
+        "icon": topic.icon,
+        "color": topic.color,
+        "bg": topic.bg,
+        "badge": topic.badge,
+        "blurb": topic.blurb,
+        "readings": [
+            {
+                "title": r.title,
+                "publisher": r.publisher,
+                "format": r.format,
+                "desc": r.desc,
+                "url": r.url,
+            }
+            for r in topic.readings
+        ],
+    }
+
+
+# Video library 
+
+def list_video_topics():
+    """All video topics with their videos, in curated display order."""
+    return VideoTopic.query.order_by(VideoTopic.position).all()
+
+
+def public_video_topic(topic):
+    """Shape a VideoTopic (+ videos) for the client, matching the
+    VIDEO_LIBRARY shape the frontend used before this became a real
+    endpoint."""
+    return {
+        "id": topic.id,
+        "label": topic.label,
+        "icon": topic.icon,
+        "color": topic.color,
+        "bg": topic.bg,
+        "badge": topic.badge,
+        "blurb": topic.blurb,
+        "videos": [
+            {
+                "title": v.title,
+                "publisher": v.publisher,
+                "format": v.format,
+                "duration": v.duration,
+                "desc": v.desc,
+                "url": v.url,
+            }
+            for v in topic.videos
+        ],
     }
