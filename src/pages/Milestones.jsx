@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "../App";
+import { milestonesApi, usersApi } from "../api";
 import {
   Sprout,
   Leaf,
@@ -12,13 +13,11 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-// TODO(backend): replace all mock logic below with real API calls, e.g.
-//   import { getRecoveryStartDate, setRecoveryStartDate, getEarnedMilestones } from "../api";
-// getRecoveryStartDate()   -> GET  /api/profile/recovery-start -> { recoveryStartDate: "YYYY-MM-DD" } | null
-// setRecoveryStartDate(d)  -> PUT  /api/profile/recovery-start -> { recoveryStartDate }
-// getEarnedMilestones()    -> GET  /api/milestones            -> [{ days, achievedAt }]
-// Milestones are derived from soberDays on the client for now; the backend should
-// eventually own "achievedAt" so earned badges keep a fixed date once unlocked.
+// Recovery start date lives on the user record (sobriety_start), set/updated
+// via PUT /api/users/me/sobriety-start. Earned badges are synced server-side
+// (GET /api/milestones) so each one keeps a fixed achieved-on date once
+// unlocked — soberDays below still drives which badges *show* as unlocked,
+// since that's identical to what the backend just computed.
 
 
 
@@ -136,12 +135,21 @@ function SetStartDateCard({ onSave }) {
 }
 
 export default function Milestones() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
-  // TODO(backend): seed from getRecoveryStartDate() instead of user context / null.
-  const [recoveryStartDate, setRecoveryStartDateState] = useState(
-    user?.sobriety_start ?? null
-  );
+  const recoveryStartDate = user?.sobriety_start ?? null;
+  const [error, setError] = useState("");
+
+  // Sync earned badges server-side whenever there's a start date to check
+  // against — locks in achieved_at for any threshold newly crossed. The UI
+  // itself doesn't need the response yet (isUnlocked below is still derived
+  // from soberDays), so this is fire-and-forget.
+  useEffect(() => {
+    if (!recoveryStartDate) return;
+    milestonesApi.list().catch(() => {
+      // Non-fatal — badges will just sync next time this page loads.
+    });
+  }, [recoveryStartDate]);
 
   const soberDays = useMemo(() => {
     if (!recoveryStartDate) return null;
@@ -150,9 +158,14 @@ export default function Milestones() {
     return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
   }, [recoveryStartDate]);
 
-  const handleSaveDate = (dateStr) => {
-    // TODO(backend): await setRecoveryStartDate(dateStr)
-    setRecoveryStartDateState(dateStr);
+  const handleSaveDate = async (dateStr) => {
+    setError("");
+    try {
+      await usersApi.setSobrietyStart(dateStr);
+      updateUser({ sobriety_start: dateStr });
+    } catch {
+      setError("Couldn't save your start date. Please try again.");
+    }
   };
 
   const completedCount = soberDays === null
@@ -172,6 +185,12 @@ export default function Milestones() {
       </div>
 
       {/* Summary bar */}
+      {error && (
+        <p className="text-sm text-[#8a2340] bg-[#FCE7EF] border border-[#8a2340]/15 rounded-xl px-3.5 py-2.5">
+          {error}
+        </p>
+      )}
+
       {soberDays !== null ? (
         <section className="bg-[#12302E] rounded-[24px] overflow-hidden relative">
           <div

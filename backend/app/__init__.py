@@ -24,9 +24,17 @@ def create_app():
     from .auth import auth_bp
     from .users import users_bp
     from .checkins import checkins_bp
+    from .milestones import milestones_bp
+    from .resources import resources_bp
+    from .library import library_bp
+    from .video_library import video_library_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(users_bp, url_prefix="/api/users")
     app.register_blueprint(checkins_bp, url_prefix="/api/checkins")
+    app.register_blueprint(milestones_bp, url_prefix="/api/milestones")
+    app.register_blueprint(resources_bp, url_prefix="/api/resources")
+    app.register_blueprint(library_bp, url_prefix="/api/library")
+    app.register_blueprint(video_library_bp, url_prefix="/api/video-library")
 
     return app
