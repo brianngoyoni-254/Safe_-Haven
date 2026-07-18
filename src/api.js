@@ -5,16 +5,16 @@ const api = axios.create({
   withCredentials: true, // send httpOnly refresh-token cookie
 });
 
-// ── Auth helpers used by App.jsx ──────────────────────────────────────────────
+// Auth helpers used by App.jsx 
 
-/** Silent token refresh — relies on httpOnly cookie */
+// Silent token refresh — relies on httpOnly cookie 
 export async function refreshToken() {
   const { data } = await api.post("/api/auth/refresh");
   // Expected: { access_token: string, expires_in: number (seconds) }
   return data;
 }
 
-/** Fetch the current user's profile */
+// Fetch the current user's profile 
 export async function getMe(token) {
   const { data } = await api.get("/api/users/me", {
     headers: { Authorization: `Bearer ${token}` },
@@ -22,7 +22,7 @@ export async function getMe(token) {
   return data;
 }
 
-// ── Attach access token to every request ─────────────────────────────────────
+// Attach access token to every request 
 // Call this once from App after login so the interceptor picks up the token.
 let _token = null;
 export function setAuthToken(token) {
@@ -34,7 +34,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ── Auth endpoints ────────────────────────────────────────────────────────────
+// Auth endpoints 
 export const authApi = {
   login:          (data)  => api.post("/api/auth/login", data),
   register:       (data)  => api.post("/api/auth/register", data),
@@ -43,19 +43,25 @@ export const authApi = {
   logout:         ()      => api.post("/api/auth/logout"),
 };
 
-// ── Check-in endpoints ────────────────────────────────────────────────────────
+// Check-in endpoints 
 export const checkInApi = {
   create: (data) => api.post("/api/checkins", data),
   list:   ()     => api.get("/api/checkins"),
   today:  ()     => api.get("/api/checkins/today"),
 };
 
-// ── Milestones ────────────────────────────────────────────────────────────────
+// Users 
+export const usersApi = {
+  setSobrietyStart: (recoveryStartDate) =>
+    api.put("/api/users/me/sobriety-start", { recoveryStartDate }),
+};
+
+//  Milestones 
 export const milestonesApi = {
   list: () => api.get("/api/milestones"),
 };
 
-// ── Groups ────────────────────────────────────────────────────────────────────
+// Groups 
 export const groupsApi = {
   list:   ()       => api.get("/api/groups"),
   get:    (id)     => api.get(`/api/groups/${id}`),
