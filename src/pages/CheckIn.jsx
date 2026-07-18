@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../App";
+import { checkInApi } from "../api";
 import {
   Heart,
   Zap,
@@ -11,13 +12,6 @@ import {
   Calendar,
   Pencil,
 } from "lucide-react";
-
-// TODO(backend): replace these mock helpers with real API calls, e.g.
-//   import { getTodayCheckIn, submitCheckIn } from "../api";
-// getTodayCheckIn() -> GET /api/checkins/today  -> { mood, cravingLevel, soberToday, notes } | null
-// submitCheckIn(payload) -> POST /api/checkins  -> saved check-in record
-
-
 
 const serif = { fontFamily: "'Fraunces', serif" };
 
@@ -61,12 +55,14 @@ export default function CheckIn() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // TODO(backend): initialize from getTodayCheckIn() on mount instead of these defaults.
   const [mood, setMood] = useState(3);
   const [craving, setCraving] = useState(1);
   const [soberToday, setSoberToday] = useState(true);
   const [notes, setNotes] = useState("");
 
+  // isLoading: fetching any existing check-in for today on mount.
+  // isSaving/isSaved/error: the save flow, same as before.
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState("");
@@ -77,12 +73,37 @@ export default function CheckIn() {
     day: "numeric",
   });
 
+  // On mount: pre-fill the form if the user already checked in today, and
+  // land straight on the "You're checked in" view instead of the blank form.
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { data: existing } = await checkInApi.today();
+        if (cancelled || !existing) return;
+        setMood(existing.mood);
+        setCraving(existing.cravingLevel);
+        setSoberToday(existing.soberToday);
+        setNotes(existing.notes ?? "");
+        setIsSaved(true);
+      } catch {
+        // Non-fatal — user can still fill out and submit a fresh check-in.
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleSubmit = async () => {
     setError("");
     setIsSaving(true);
     try {
-      // TODO(backend): await submitCheckIn({ mood, cravingLevel: craving, soberToday, notes: notes || undefined });
-      await new Promise((resolve) => setTimeout(resolve, 600)); // simulated save
+      await checkInApi.create({ mood, cravingLevel: craving, soberToday, notes: notes || undefined });
       setIsSaved(true);
     } catch {
       setError("Couldn't save your check-in. Please try again.");
@@ -90,6 +111,14 @@ export default function CheckIn() {
       setIsSaving(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-24">
+        <Loader2 size={24} className="animate-spin text-[#0D6E64]" />
+      </div>
+    );
+  }
 
   if (isSaved) {
     return (
