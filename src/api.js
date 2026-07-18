@@ -83,4 +83,20 @@ export const resourcesApi = {
   list: (params) => api.get("/api/resources", { params }),
 };
 
+// Donations 
+// STK push is asynchronous on Safaricom's side: initiate() only confirms the
+// prompt was sent to the donor's phone. The actual PIN entry happens on their
+// device, so the caller (Donations.jsx) polls status() every few seconds
+// with the returned checkoutRequestId until it resolves to "success" or
+// "failed"/timeout.
+export const donationsApi = {
+  initiate: (data) => api.post("/api/donations/mpesa/stk-push", data),
+  // data: { amount, phone, name, message, anonymous, frequency }
+  // -> { checkoutRequestId }
+
+  status: (checkoutRequestId) =>
+    api.get(`/api/donations/mpesa/status/${checkoutRequestId}`),
+  // -> { status: "pending" | "success" | "failed" }
+};
+
 export default api;
