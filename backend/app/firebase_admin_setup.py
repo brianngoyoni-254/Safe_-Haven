@@ -44,5 +44,5 @@ def verify_firebase_token(id_token):
 
     try:
         return firebase_auth.verify_id_token(id_token)
-    except Exception as e:  # noqa: BLE001 - normalize all firebase errors
+    except Exception as e:  # normalize all firebase errors
         raise ValueError(f"Invalid Firebase token: {e}")

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "../App";
+import PhoneIntro from "../components/PhoneIntro";
 import {
   BookOpen,
   Plus,
@@ -399,6 +400,11 @@ function DeleteConfirmModal({ open, onCancel, onConfirm, deleting }) {
 export default function Journals() {
   const { user } = useAuth();
 
+  // Shows the iPhone welcome animation once per visit to this page. Purely
+  // local UI state — dismissing it (via its CTA or the Skip link) reveals
+  // the normal journal list underneath.
+  const [showIntro, setShowIntro] = useState(true);
+
   // TODO(backend): seed from listJournalEntries() instead of INITIAL_ENTRIES.
   const [entries, setEntries] = useState(INITIAL_ENTRIES);
   const [view, setView] = useState("list"); // "list" | "create" | "edit"
@@ -498,6 +504,14 @@ export default function Journals() {
         <section className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5">
           <EntryForm entry={editingEntry} onCancel={backToList} onSave={handleSave} saving={saving} />
         </section>
+      </div>
+    );
+  }
+
+  if (showIntro) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <PhoneIntro onFinish={() => setShowIntro(false)} />
       </div>
     );
   }

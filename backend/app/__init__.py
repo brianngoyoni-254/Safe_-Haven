@@ -7,9 +7,6 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Frontend (Vite) runs on a different origin than the API in dev, and we
-    # send an httpOnly refresh cookie — that requires an explicit origin
-    # (not "*") plus supports_credentials=True, or the browser blocks it.
     CORS(
         app,
         supports_credentials=True,

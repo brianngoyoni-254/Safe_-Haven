@@ -144,19 +144,25 @@ function AuthProvider({ children }) {
 
 // ROUTE GUARDS
 
+const serif = { fontFamily: "'Fraunces', serif" };
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F7F4EC]">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 size={40} className="text-[#0D6E64] animate-spin" />
+        <p className="text-sm text-[#4A544C]" style={serif}>Loading Safe Haven…</p>
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoute() {
   const { isLoggedIn, isReady } = useAuth();
   const location = useLocation();
 
   if (!isReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 size={40} className="text-teal-600 animate-spin" />
-          <p className="text-sm text-gray-400">Loading Safe Haven…</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return isLoggedIn ? (
@@ -190,14 +196,7 @@ function GroupsGate() {
   const { isLoggedIn, isReady } = useAuth();
 
   if (!isReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 size={40} className="text-teal-600 animate-spin" />
-          <p className="text-sm text-gray-400">Loading Safe Haven…</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return isLoggedIn ? (
