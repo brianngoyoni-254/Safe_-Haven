@@ -20,6 +20,9 @@ import {
   TreePine,
   Star,
   Trophy,
+  PenLine,
+  Sparkles,
+  Clock,
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -40,6 +43,16 @@ const MILESTONES = [
   { days: 90, Icon: TreePine, color: "#0e7c8c", bg: "#DDF0F3" },
   { days: 180, Icon: Star, color: "#1c7fa8", bg: "#DFEFF7" },
   { days: 365, Icon: Trophy, color: "#C98A3E", bg: "#F1DEBC" },
+];
+
+// A quiet, non-clinical close to the page. Rotates daily (not randomly on
+// every render) so it doesn't feel jittery on re-renders.
+const QUOTES = [
+  "Recovery is not a race. You don't have to feel guilty if it takes you longer than you thought it would.",
+  "Progress, not perfection.",
+  "You didn't come this far to only come this far.",
+  "One day at a time is still a day well lived.",
+  "Healing isn't linear, and that's allowed.",
 ];
 
 function formatDate(dateStr, options) {
@@ -146,6 +159,13 @@ export default function Dashboard() {
   const [checkIns] = useState([]);
   const [todayCheckIn] = useState(null);
 
+  // TODO(backend): seed from getUpcomingGroupSession() -> the next scheduled
+  // session among groups the user has joined, e.g.
+  //   { groupName, groupId, time, meetsToday }
+  const [upcomingSession] = useState(null);
+
+  const quote = useMemo(() => QUOTES[new Date().getDate() % QUOTES.length], []);
+
   const soberDays = useMemo(() => {
     if (!user?.sobriety_start) return null;
     const start = new Date(`${user.sobriety_start}T12:00:00`);
@@ -197,6 +217,7 @@ export default function Dashboard() {
       color: "#0d9668",
       bg: "#E3F5EC",
       sub: `${streak} consecutive sober days`,
+      to: "/milestones",
     },
     {
       label: "Avg Mood",
@@ -205,6 +226,7 @@ export default function Dashboard() {
       color: "#c2417a",
       bg: "#FCE7EF",
       sub: "Last 7 check-ins",
+      to: "/journal",
     },
     {
       label: "Sober Rate",
@@ -213,6 +235,7 @@ export default function Dashboard() {
       color: "#0D6E64",
       bg: "#D8E8E4",
       sub: "Last 30 days",
+      to: "/check-in",
     },
   ];
 
@@ -264,19 +287,29 @@ export default function Dashboard() {
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
           </p>
         </div>
-        {!todayCheckIn ? (
-          <Link
-            to="/check-in"
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold text-[#F7F4EC] bg-[#0D6E64]
-              shadow-sm hover:brightness-110 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-150 cursor-pointer"
-          >
-            <Heart className="w-3.5 h-3.5" /> Check In
-          </Link>
-        ) : (
+        {todayCheckIn && (
           <span className="flex items-center gap-1.5 text-sm font-semibold text-[#0D6E64] bg-[#D8E8E4] border border-[#0D6E64]/15 rounded-full px-3.5 py-2">
             <CheckCircle2 className="w-3.5 h-3.5" /> Checked in today
           </span>
         )}
+      </div>
+
+      {/* Quick actions — the two things worth doing right now, always in reach */}
+      <div className="flex gap-3 flex-wrap">
+        <Link
+          to="/check-in"
+          className="flex-1 min-w-[180px] flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-semibold text-[#F7F4EC] bg-[#0D6E64]
+            shadow-sm hover:brightness-110 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-150 cursor-pointer"
+        >
+          <Heart className="w-4 h-4" /> {todayCheckIn ? "Edit today's check-in" : "Check in today"}
+        </Link>
+        <Link
+          to="/journal"
+          className="flex-1 min-w-[180px] flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-semibold text-[#12302E] bg-[#F7F4EC] border border-[#12302E]/12
+            hover:border-[#0D6E64]/40 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-150 cursor-pointer"
+        >
+          <PenLine className="w-4 h-4" /> Write journal entry
+        </Link>
       </div>
 
       {/* Setup prompt */}
@@ -359,7 +392,11 @@ export default function Dashboard() {
       {/* Secondary stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {secondaryStats.map((stat) => (
-          <div key={stat.label} className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5 flex items-center gap-4">
+          <Link
+            key={stat.label}
+            to={stat.to}
+            className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm hover:shadow-md hover:border-[#0D6E64]/30 hover:-translate-y-0.5 transition-all duration-150 cursor-pointer p-5 flex items-center gap-4"
+          >
             <div
               className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: stat.bg }}
@@ -373,12 +410,40 @@ export default function Dashboard() {
               <div className="text-xs font-semibold text-[#12302E]/80 mt-1.5">{stat.label}</div>
               <div className="text-[11px] text-[#4A544C]/70 mt-0.5 leading-snug truncate">{stat.sub}</div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
       {/* Mood chart */}
       {checkIns.length >= 2 && <MoodChart checkIns={checkIns} />}
+
+      {/* Upcoming group session — surfaces the next scheduled meetup among
+          groups the user has joined, so they don't have to go check /groups. */}
+      {upcomingSession && (
+        <section className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-[#12302E] mb-3.5 tracking-tight">
+            <Users className="w-4 h-4 text-[#0D6E64]" /> Next group session
+          </h2>
+          <div className="flex items-center gap-3.5 flex-wrap">
+            <div className="w-10 h-10 rounded-xl bg-[#D8E8E4] flex items-center justify-center flex-shrink-0">
+              <Users className="w-[18px] h-[18px] text-[#0D6E64]" />
+            </div>
+            <div className="flex-1 min-w-[160px]">
+              <div className="text-sm font-semibold text-[#12302E]">{upcomingSession.groupName}</div>
+              <p className="flex items-center gap-1.5 text-xs text-[#4A544C] mt-0.5">
+                <Clock className="w-3 h-3" /> {upcomingSession.time}
+              </p>
+            </div>
+            <Link
+              to={`/groups`}
+              className="px-4 py-2.5 rounded-full text-sm font-semibold text-[#F7F4EC] bg-[#0D6E64]
+                shadow-sm hover:brightness-110 transition-all cursor-pointer flex-shrink-0"
+            >
+              Open chat
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Earned badges */}
       {earnedMilestones.length > 0 && (
@@ -443,6 +508,14 @@ export default function Dashboard() {
             </Link>
           </div>
         )}
+      </section>
+
+      {/* A quiet close — grounds the page in something human, not just metrics */}
+      <section className="bg-[#12302E] rounded-[20px] p-6 text-center relative overflow-hidden">
+        <Sparkles className="w-4 h-4 text-[#C98A3E]/70 mx-auto mb-3" />
+        <p className="italic text-[15px] text-[#F1DEBC] leading-relaxed max-w-md mx-auto" style={serif}>
+          "{quote}"
+        </p>
       </section>
 
       {/* Support Safe Haven — warm, low-pressure donation nudge.
