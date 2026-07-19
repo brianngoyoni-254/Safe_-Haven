@@ -6,14 +6,10 @@ import {
   Pill,
   HeartHandshake,
   Baby,
-
-
-
   MessageCircle,
   Wind,
   ShieldAlert,
 } from "lucide-react";
-
 
 // TODO(backend): this is static reference content for now — no auth, no API
 // calls needed. If you later let orgs self-report new hotlines, this becomes
@@ -41,26 +37,24 @@ const SUPPORT_CATEGORIES = [
   {
     id: "mental-health",
     title: "Suicide & Mental Health Crisis",
+    navLabel: "Suicide & mental health",
     Icon: LifeBuoy,
     color: "teal",
     lines: [
       {
         name: "Befrienders Kenya",
         numbers: ["0722 178 177"],
-        tel: "+254722178177",
         whatsapp: "254722178177",
         desc: "Free, confidential emotional support by phone, SMS, and WhatsApp for anyone in distress or having thoughts of suicide.",
       },
       {
         name: "EMKF Suicide Prevention & Crisis Helpline",
         numbers: ["0800 723 253"],
-        tel: "0800723253",
         desc: "Toll-free, nationwide crisis line run by Emergency Medicine Kenya Foundation.",
       },
       {
         name: "Niskize Counseling Helpline",
         numbers: ["0900 620 800"],
-        tel: "0900620800",
         desc: "24-hour call center offering counseling for distress, grief, and substance use.",
       },
     ],
@@ -68,13 +62,13 @@ const SUPPORT_CATEGORIES = [
   {
     id: "substance-abuse",
     title: "Alcohol & Drug Abuse",
+    navLabel: "Substance use",
     Icon: Pill,
-    color: "cyan",
+    color: "blue",
     lines: [
       {
         name: "NACADA National Helpline",
         numbers: ["1192"],
-        tel: "1192",
         desc: "Free, confidential, 24/7 counseling and referrals for drug and alcohol use, run by the National Authority for the Campaign Against Alcohol and Drug Abuse.",
       },
     ],
@@ -82,19 +76,18 @@ const SUPPORT_CATEGORIES = [
   {
     id: "gbv",
     title: "Gender-Based Violence",
+    navLabel: "Gender-based violence",
     Icon: HeartHandshake,
     color: "rose",
     lines: [
       {
         name: "National GBV Hotline",
         numbers: ["1195"],
-        tel: "1195",
         desc: "Toll-free national hotline for survivors of gender-based violence, available to all genders.",
       },
       {
         name: "Gender Violence Recovery Centre (GVRC)",
         numbers: ["0719 638 006", "0709 667 000"],
-        tel: "0719638006",
         desc: "24/7 free medical treatment and psychosocial support for survivors, run by Nairobi Women's Hospital.",
       },
     ],
@@ -102,45 +95,51 @@ const SUPPORT_CATEGORIES = [
   {
     id: "child-protection",
     title: "Child Protection",
+    navLabel: "Child protection",
     Icon: Baby,
     color: "violet",
     lines: [
       {
         name: "Childline Kenya",
         numbers: ["116"],
-        tel: "116",
         desc: "Kenya's only 24-hour, toll-free helpline for children experiencing abuse or distress. Also open to adults reporting on a child's behalf.",
       },
     ],
   },
 ];
 
+// One cohesive palette pulled from the rest of the app (teal, blue, rose,
+// violet already appear elsewhere — milestones, journal, mood) instead of
+// generic Tailwind stock colors, so this page still feels like Safe Haven.
 const COLOR_STYLES = {
   teal: {
     iconBg: "bg-[#D8E8E4]",
     iconColor: "text-[#0D6E64]",
-    badge: "bg-[#D8E8E4] text-[#0D6E64] border-[#0D6E64]/15",
     button: "bg-[#0D6E64] hover:brightness-110",
   },
-  cyan: {
-    iconBg: "bg-cyan-50",
-    iconColor: "text-cyan-600",
-    badge: "bg-cyan-50 text-cyan-700 border-cyan-100",
-    button: "bg-cyan-600 hover:bg-cyan-500",
+  blue: {
+    iconBg: "bg-[#DFEFF7]",
+    iconColor: "text-[#1c7fa8]",
+    button: "bg-[#1c7fa8] hover:brightness-110",
   },
   rose: {
     iconBg: "bg-[#FCE7EF]",
     iconColor: "text-[#c2417a]",
-    badge: "bg-[#FCE7EF] text-[#8a2340] border-[#c2417a]/15",
     button: "bg-[#c2417a] hover:brightness-110",
   },
   violet: {
-    iconBg: "bg-violet-50",
-    iconColor: "text-violet-600",
-    badge: "bg-violet-50 text-violet-700 border-violet-100",
-    button: "bg-violet-600 hover:bg-violet-500",
+    iconBg: "bg-[#EEE9FA]",
+    iconColor: "text-[#7c5cbf]",
+    button: "bg-[#7c5cbf] hover:brightness-110",
   },
 };
+
+// Quick-jump chips so someone can go straight to the category they need
+// instead of scrolling past sections that don't apply to them.
+const NAV_ITEMS = [
+  { id: "emergency", label: "Emergency" },
+  ...SUPPORT_CATEGORIES.map((c) => ({ id: c.id, label: c.navLabel })),
+];
 
 function telHref(raw) {
   return `tel:${raw.replace(/\s+/g, "")}`;
@@ -176,7 +175,7 @@ function BreathingExercise() {
   const scale = phase === "in" ? "scale-100" : phase === "out" ? "scale-50" : "scale-100";
 
   return (
-    <section className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-6 flex flex-col items-center text-center gap-4">
+    <section className="bg-white rounded-[20px] border border-[#12302E]/10 shadow-sm p-6 flex flex-col items-center text-center gap-4">
       <div className="flex items-center gap-2 text-[#12302E] font-semibold text-sm">
         <Wind className="w-4 h-4 text-[#0D6E64]" /> A moment to breathe
       </div>
@@ -208,37 +207,35 @@ function BreathingExercise() {
   );
 }
 
-function HotlineCard({ line, color }) {
+// A single hotline as a compact row: name + description on the left, every
+// number as its own tap-to-call chip on the right (plus WhatsApp if
+// available). Replaces the old bordered-card-per-hotline grid, which read as
+// busier the more numbers a category had.
+function HotlineRow({ line, color }) {
   const styles = COLOR_STYLES[color];
   return (
-    <div className="rounded-xl border border-[#12302E]/10 bg-[#F7F4EC]/60 p-4 space-y-2">
-      <div className="flex items-start justify-between gap-2 flex-wrap">
+    <div className="flex items-center justify-between gap-4 py-4 flex-wrap first:pt-0 last:pb-0">
+      <div className="min-w-0 flex-1">
         <h3 className="font-semibold text-[#12302E] text-sm">{line.name}</h3>
-        <div className="flex gap-1.5 flex-wrap">
-          {line.numbers.map((n) => (
-            <span key={n} className={`text-xs px-2 py-0.5 rounded-full border ${styles.badge}`}>
-              {n}
-            </span>
-          ))}
-        </div>
+        <p className="text-xs text-[#4A544C] mt-0.5 leading-relaxed">{line.desc}</p>
       </div>
-      <p className="text-xs text-[#4A544C]">{line.desc}</p>
-      <div className="flex gap-2 pt-1">
-        <a href={telHref(line.tel)} className="flex-1">
-          <span
-            className={`flex items-center justify-center gap-1.5 h-9 rounded-lg text-sm font-medium text-white transition-colors cursor-pointer ${styles.button}`}
-          >
-            <Phone className="w-3.5 h-3.5" /> Call
-          </span>
-        </a>
+      <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+        {line.numbers.map((n) => (
+          <a key={n} href={telHref(n)}>
+            <span
+              className={`flex items-center gap-1.5 text-xs font-semibold text-white px-3.5 py-2.5 rounded-lg
+                transition-colors cursor-pointer whitespace-nowrap ${styles.button}`}
+            >
+              <Phone className="w-3.5 h-3.5" /> {n}
+            </span>
+          </a>
+        ))}
         {line.whatsapp && (
-          <a
-            href={`https://wa.me/${line.whatsapp}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1"
-          >
-            <span className="flex items-center justify-center gap-1.5 h-9 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors cursor-pointer">
+          <a href={`https://wa.me/${line.whatsapp}`} target="_blank" rel="noopener noreferrer">
+            <span
+              className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50
+                hover:bg-emerald-100 px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+            >
               <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
             </span>
           </a>
@@ -263,24 +260,42 @@ export default function Crisis() {
         </p>
       </div>
 
-      {/* Immediate danger callout */}
-      <section className="bg-[#FCE7EF] border border-[#c2417a]/25 rounded-[20px] p-5 space-y-4">
+      {/* Quick-jump nav */}
+      <div className="flex gap-2 flex-wrap">
+        {NAV_ITEMS.map((item) => (
+          <a
+            key={item.id}
+            href={`#${item.id}`}
+            className="text-xs font-medium text-[#12302E] bg-white border border-[#12302E]/12 rounded-full px-3.5 py-2
+              hover:border-[#0D6E64]/40 hover:text-[#0D6E64] transition-colors cursor-pointer"
+          >
+            {item.label}
+          </a>
+        ))}
+      </div>
+
+      {/* Immediate danger callout — one consistent color for real emergencies,
+          instead of the same bright pink used elsewhere for general alerts,
+          so it reads as its own distinct, serious tier. */}
+      <section id="emergency" className="bg-[#FAECE7] border border-[#F0997B]/40 rounded-[20px] p-5 space-y-4 scroll-mt-4">
         <div className="flex items-center gap-2">
-          <ShieldAlert className="w-5 h-5 text-[#c2417a]" />
-          <h2 className="font-semibold text-[#8a2340] text-sm tracking-tight">If you or someone else is in immediate danger</h2>
+          <ShieldAlert className="w-5 h-5 text-[#993C1D]" />
+          <h2 className="font-semibold text-[#4A1B0C] text-sm tracking-tight">
+            If you or someone else is in immediate danger
+          </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {EMERGENCY_LINES.map((line) => (
-            <div key={line.id} className="bg-[#F7F4EC] rounded-[18px] border border-[#c2417a]/15 p-4">
+            <div key={line.id} className="bg-white rounded-[16px] p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Siren className="w-4 h-4 text-[#c2417a]" />
+                <Siren className="w-4 h-4 text-[#993C1D]" />
                 <h3 className="font-semibold text-[#12302E] text-sm">{line.name}</h3>
               </div>
               <p className="text-xs text-[#4A544C] mb-3">{line.desc}</p>
               <div className="flex gap-2 flex-wrap">
                 {line.numbers.map((n) => (
                   <a key={n} href={telHref(n)} className="flex-1 min-w-[100px]">
-                    <span className="flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-semibold text-white bg-[#c2417a] hover:brightness-110 transition-colors cursor-pointer">
+                    <span className="flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-semibold text-white bg-[#993C1D] hover:brightness-110 transition-colors cursor-pointer">
                       <Phone className="w-4 h-4" /> {n}
                     </span>
                   </a>
@@ -292,7 +307,7 @@ export default function Crisis() {
       </section>
 
       {/* Reassurance */}
-      <p className="text-sm text-[#4A544C] bg-[#D8E8E4]/50 border border-[#0D6E64]/15 rounded-[20px] p-4">
+      <p className="text-sm text-[#12302E] bg-[#D8E8E4] rounded-[20px] p-4 leading-relaxed">
         If you're having thoughts of suicide, please reach out to one of the lines below — someone is
         ready to listen, day or night. Recovery isn't linear, and reaching out is a sign of strength,
         not failure.
@@ -301,22 +316,28 @@ export default function Crisis() {
       {/* Breathing exercise */}
       <BreathingExercise />
 
-      {/* Support categories */}
+      {/* Support categories — each is one card with hotlines listed as rows,
+          separated by hairlines, instead of a grid of separate bordered
+          cards competing for attention. */}
       <div className="space-y-4">
         {SUPPORT_CATEGORIES.map((cat) => {
           const styles = COLOR_STYLES[cat.color];
           const Icon = cat.Icon;
           return (
-            <section key={cat.id} className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5">
-              <div className="flex items-center gap-3 mb-4">
+            <section
+              key={cat.id}
+              id={cat.id}
+              className="bg-white rounded-[20px] border border-[#12302E]/10 shadow-sm p-5 scroll-mt-4"
+            >
+              <div className="flex items-center gap-3 mb-1">
                 <div className={`w-10 h-10 rounded-xl ${styles.iconBg} flex items-center justify-center`}>
                   <Icon className={`w-5 h-5 ${styles.iconColor}`} />
                 </div>
                 <h2 className="font-semibold text-[#12302E] tracking-tight">{cat.title}</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="divide-y divide-[#12302E]/8">
                 {cat.lines.map((line) => (
-                  <HotlineCard key={line.name} line={line} color={cat.color} />
+                  <HotlineRow key={line.name} line={line} color={cat.color} />
                 ))}
               </div>
             </section>
@@ -325,8 +346,8 @@ export default function Crisis() {
       </div>
 
       {/* Talk to someone you trust */}
-      <section className="bg-[#EFEAE0] border border-[#12302E]/10 rounded-[20px] p-5 text-center">
-        <p className="text-sm text-[#4A544C]">
+      <section className="bg-white border border-[#12302E]/10 rounded-[20px] p-5 text-center">
+        <p className="text-sm text-[#4A544C] leading-relaxed">
           Hotlines aren't the only option. If there's a friend, family member, sponsor, or counselor you
           trust, reaching out to them matters too — you don't have to carry this by yourself.
         </p>
