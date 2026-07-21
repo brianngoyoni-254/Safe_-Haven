@@ -226,7 +226,7 @@ export default function Dashboard() {
       color: "#c2417a",
       bg: "#FCE7EF",
       sub: "Last 7 check-ins",
-      to: "/journal",
+      to: "/check-in",
     },
     {
       label: "Sober Rate",
@@ -235,7 +235,7 @@ export default function Dashboard() {
       color: "#0D6E64",
       bg: "#D8E8E4",
       sub: "Last 30 days",
-      to: "/check-in",
+      to: "/milestones",
     },
   ];
 

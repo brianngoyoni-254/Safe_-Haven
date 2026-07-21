@@ -139,19 +139,15 @@ class LibraryTopic(db.Model):
 
     __tablename__ = "library_topics"
 
-    # Human-readable slug (e.g. "alcohol") doubles as the primary key, since
-    # the frontend already keyed off this id and it's stable/curated by us.
     id = db.Column(db.String(50), primary_key=True)
 
     label = db.Column(db.String(120), nullable=False)
-    # lucide-react icon name (e.g. "Wine") — resolved to a component on the
-    # frontend via a lookup table, since icon components can't be stored.
     icon = db.Column(db.String(50), nullable=False)
     color = db.Column(db.String(50), nullable=False)
     bg = db.Column(db.String(50), nullable=False)
     badge = db.Column(db.String(120), nullable=False)
     blurb = db.Column(db.Text, nullable=False)
-    # Preserves the original curated ordering of topics on the page.
+
     position = db.Column(db.Integer, nullable=False, default=0)
 
     readings = db.relationship(
@@ -234,3 +230,110 @@ class Video(db.Model):
 
     def __repr__(self):
         return f"<Video title={self.title!r}>"
+
+
+# Groups 
+
+class Group(db.Model):
+    """A Safe Haven-run support group. Membership and chat live in separate
+    tables (GroupMembership, GroupMessage) rather than as columns here."""
+
+    __tablename__ = "groups"
+
+    id = db.Column(db.String(36), primary_key=True, default=_uuid_str)
+
+    name = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    # Validated against Groups.jsx's CATEGORIES list at the route layer —
+    # kept as a plain string here (not an Enum) so new categories don't
+    # require a migration.
+    category = db.Column(db.String(80), nullable=False, index=True)
+
+    organizer_id = db.Column(
+        db.String(36), db.ForeignKey("users.id"), nullable=False, index=True
+    )
+    organizer = db.relationship("User")
+
+    is_private = db.Column(db.Boolean, nullable=False, default=False)
+    # Free-text, e.g. "Tuesdays & Thursdays, 8:00 PM EST" — matches how the
+    # frontend renders it verbatim, no structured recurrence for now.
+    meeting_schedule = db.Column(db.String(255), nullable=True)
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    memberships = db.relationship(
+        "GroupMembership", backref="group", cascade="all, delete-orphan"
+    )
+    messages = db.relationship(
+        "GroupMessage",
+        backref="group",
+        cascade="all, delete-orphan",
+        order_by="GroupMessage.created_at",
+    )
+
+    def __repr__(self):
+        return f"<Group name={self.name!r}>"
+
+
+class GroupMembership(db.Model):
+    """One row per (user, group) — existence of the row means membership.
+    memberCount / isMember on the API side are derived from this table
+    rather than stored as columns on Group, so they can't drift."""
+
+    __tablename__ = "group_memberships"
+
+    id = db.Column(db.String(36), primary_key=True, default=_uuid_str)
+    group_id = db.Column(
+        db.String(36), db.ForeignKey("groups.id"), nullable=False, index=True
+    )
+    user_id = db.Column(
+        db.String(36), db.ForeignKey("users.id"), nullable=False, index=True
+    )
+
+    joined_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    user = db.relationship("User")
+
+    __table_args__ = (
+        db.UniqueConstraint("group_id", "user_id", name="uq_group_memberships_group_user"),
+    )
+
+    def __repr__(self):
+        return f"<GroupMembership group={self.group_id!r} user={self.user_id!r}>"
+
+
+class GroupMessage(db.Model):
+    """One chat message within a group."""
+
+    __tablename__ = "group_messages"
+
+    id = db.Column(db.String(36), primary_key=True, default=_uuid_str)
+    group_id = db.Column(
+        db.String(36), db.ForeignKey("groups.id"), nullable=False, index=True
+    )
+    author_id = db.Column(
+        db.String(36), db.ForeignKey("users.id"), nullable=False, index=True
+    )
+    author = db.relationship("User")
+
+    text = db.Column(db.Text, nullable=False)
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    # Set only when the message has been edited — public_message() uses its
+    # presence to decide whether to send "editedAt" (Groups.jsx shows "· edited").
+    edited_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    def __repr__(self):
+        return f"<GroupMessage group={self.group_id!r} author={self.author_id!r}>"

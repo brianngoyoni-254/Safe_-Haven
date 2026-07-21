@@ -10,6 +10,9 @@ from .models import (
     LibraryReading,
     VideoTopic,
     Video,
+    Group,
+    GroupMembership,
+    GroupMessage,
 )
 
 
@@ -257,4 +260,165 @@ def public_video_topic(topic):
             }
             for v in topic.videos
         ],
+    }
+
+
+# Groups 
+
+def create_group(organizer_id, name, description, category, is_private, meeting_schedule):
+    """Creates the group and auto-joins the organizer as its first member —
+    matches the frontend's optimistic handleCreate(), which sets
+    memberCount: 1, isMember: true on the group it just created."""
+    group = Group(
+        organizer_id=organizer_id,
+        name=name,
+        description=description,
+        category=category,
+        is_private=is_private,
+        meeting_schedule=meeting_schedule,
+    )
+    db.session.add(group)
+    db.session.flush()  # so group.id exists for the membership row below
+
+    db.session.add(GroupMembership(group_id=group.id, user_id=organizer_id))
+    db.session.commit()
+    return group
+
+
+def get_group(group_id):
+    return Group.query.get(group_id)
+
+
+def list_groups():
+    """All groups, newest first — matches the order new groups appear in
+    on the frontend (prepended to the top of the list)."""
+    return Group.query.order_by(Group.created_at.desc()).all()
+
+
+def list_my_groups(user_id):
+    """Groups the given user currently belongs to, newest-joined first."""
+    return (
+        Group.query.join(GroupMembership, GroupMembership.group_id == Group.id)
+        .filter(GroupMembership.user_id == user_id)
+        .order_by(GroupMembership.joined_at.desc())
+        .all()
+    )
+
+
+def delete_group(group):
+    db.session.delete(group)
+    db.session.commit()
+
+
+def get_member_count(group_id):
+    return GroupMembership.query.filter_by(group_id=group_id).count()
+
+
+def is_member(group_id, user_id):
+    return (
+        GroupMembership.query.filter_by(group_id=group_id, user_id=user_id).first()
+        is not None
+    )
+
+
+def join_group(group_id, user_id):
+    """No-op if already a member (idempotent) — avoids a race where a
+    double-click on "Join" trips the unique constraint."""
+    if not is_member(group_id, user_id):
+        db.session.add(GroupMembership(group_id=group_id, user_id=user_id))
+        db.session.commit()
+    return get_group(group_id)
+
+
+def leave_group(group_id, user_id):
+    membership = GroupMembership.query.filter_by(
+        group_id=group_id, user_id=user_id
+    ).first()
+    if membership:
+        db.session.delete(membership)
+        db.session.commit()
+    return get_group(group_id)
+
+
+def public_group(group, current_user_id=None):
+    """Shape a Group row for the client, matching the MOCK_GROUPS shape in
+    Groups.jsx (organizerId/organizerName/memberCount/isPrivate/
+    meetingSchedule/isMember)."""
+    return {
+        "id": group.id,
+        "name": group.name,
+        "description": group.description,
+        "category": group.category,
+        "organizerId": group.organizer_id,
+        "organizerName": group.organizer.username if group.organizer else None,
+        "memberCount": get_member_count(group.id),
+        "isPrivate": group.is_private,
+        "meetingSchedule": group.meeting_schedule,
+        "isMember": is_member(group.id, current_user_id) if current_user_id else False,
+    }
+
+
+# Group messages 
+
+def get_messages(group_id, limit=None):
+    """Oldest first, matching how Groups.jsx renders the chat thread
+    top-to-bottom. `limit` (if given) still returns oldest-first — it grabs
+    the most recent N, then re-sorts ascending."""
+    q = GroupMessage.query.filter_by(group_id=group_id).order_by(
+        GroupMessage.created_at.desc()
+    )
+    if limit:
+        rows = q.limit(limit).all()
+        return list(reversed(rows))
+    return list(reversed(q.all()))
+
+
+def create_message(group_id, author_id, text):
+    message = GroupMessage(group_id=group_id, author_id=author_id, text=text)
+    db.session.add(message)
+    db.session.commit()
+    return message
+
+
+def get_message(message_id):
+    return GroupMessage.query.get(message_id)
+
+
+def edit_message(message_id, author_id, text):
+    """Returns the updated message, or None if it doesn't exist or
+    author_id doesn't match — the route layer turns None into a 403/404."""
+    from datetime import datetime, timezone
+
+    message = get_message(message_id)
+    if not message or message.author_id != author_id:
+        return None
+
+    message.text = text
+    message.edited_at = datetime.now(timezone.utc)
+    db.session.commit()
+    return message
+
+
+def delete_message(message_id, author_id):
+    """Returns True if deleted, False if the message doesn't exist or
+    author_id doesn't match."""
+    message = get_message(message_id)
+    if not message or message.author_id != author_id:
+        return False
+
+    db.session.delete(message)
+    db.session.commit()
+    return True
+
+
+def public_message(message):
+    """Shape a GroupMessage row for the client, matching MOCK_MESSAGES in
+    Groups.jsx (authorId/authorName/text/createdAt/editedAt)."""
+    return {
+        "id": message.id,
+        "authorId": message.author_id,
+        "authorName": message.author.username if message.author else None,
+        "text": message.text,
+        "createdAt": message.created_at.isoformat() if message.created_at else None,
+        "editedAt": message.edited_at.isoformat() if message.edited_at else None,
     }
