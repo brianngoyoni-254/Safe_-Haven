@@ -63,11 +63,21 @@ export const milestonesApi = {
 
 // Groups 
 export const groupsApi = {
-  list:   ()       => api.get("/api/groups"),
-  get:    (id)     => api.get(`/api/groups/${id}`),
-  create: (data)   => api.post("/api/groups", data),
-  join:   (id)     => api.post(`/api/groups/${id}/join`),
-  leave:  (id)     => api.post(`/api/groups/${id}/leave`),
+  list:       ()               => api.get("/api/groups"),
+  mine:       ()                => api.get("/api/groups/mine"),
+  categories: ()                => api.get("/api/groups/categories"),
+  get:        (id)              => api.get(`/api/groups/${id}`),
+  create:     (data)            => api.post("/api/groups", data),
+  join:       (id)              => api.post(`/api/groups/${id}/join`),
+  leave:      (id)              => api.post(`/api/groups/${id}/leave`),
+  delete:     (id)              => api.delete(`/api/groups/${id}`),
+
+  messages: {
+    list:   (groupId)               => api.get(`/api/groups/${groupId}/messages`),
+    send:   (groupId, text)         => api.post(`/api/groups/${groupId}/messages`, { text }),
+    edit:   (groupId, msgId, text)  => api.patch(`/api/groups/${groupId}/messages/${msgId}`, { text }),
+    delete: (groupId, msgId)        => api.delete(`/api/groups/${groupId}/messages/${msgId}`),
+  },
 };
 
 // Journal 

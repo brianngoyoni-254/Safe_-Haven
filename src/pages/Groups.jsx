@@ -25,47 +25,25 @@ import {
   Phone,
 } from "lucide-react";
 
-// TODO(backend): replace every helper in this block with real API calls, e.g.
-//   import { listGroups, myGroups, createGroup, joinGroup, leaveGroup,
-//            deleteGroup, getMessages, sendMessage } from "../api";
-// listGroups()                -> GET  /api/groups                 -> Group[]
-// myGroups()                  -> GET  /api/groups/mine             -> Group[]
-// createGroup(payload)        -> POST /api/groups                  -> Group
-// joinGroup(groupId)          -> POST /api/groups/:id/join          -> Group
-// leaveGroup(groupId)         -> POST /api/groups/:id/leave         -> Group
-// deleteGroup(groupId)        -> DELETE /api/groups/:id             -> void
-// getMessages(groupId)        -> GET  /api/groups/:id/messages      -> Message[]
-// sendMessage(groupId, text)  -> POST /api/groups/:id/messages      -> Message
-// editMessage(groupId, msgId, text)   -> PATCH  /api/groups/:id/messages/:msgId -> Message
-// deleteMessage(groupId, msgId)       -> DELETE /api/groups/:id/messages/:msgId -> void
-// Ideally getMessages is backed by a live subscription (WebSocket/SSE/polling)
-// so new messages from other members show up without a refresh.
-// Only a message's author (or an organizer, if added later) should be
-// allowed to edit/delete it — enforce this server-side too; the isMine
-// check in the UI below is just a convenience for hiding the controls.
-
-
+import { groupsApi } from "../api";
+// groupsApi.categories()                    -> GET    /api/groups/categories         -> string[]
+// groupsApi.list()                          -> GET    /api/groups                    -> Group[]
+// groupsApi.mine()                          -> GET    /api/groups/mine                -> Group[]
+// groupsApi.create(payload)                 -> POST   /api/groups                    -> Group
+// groupsApi.join(id)                        -> POST   /api/groups/:id/join            -> Group
+// groupsApi.leave(id)                       -> POST   /api/groups/:id/leave           -> Group
+// groupsApi.delete(id)                      -> DELETE /api/groups/:id                 -> void
+// groupsApi.messages.list(id)               -> GET    /api/groups/:id/messages        -> Message[]
+// groupsApi.messages.send(id, text)         -> POST   /api/groups/:id/messages        -> Message
+// groupsApi.messages.edit(id, msgId, text)  -> PATCH  /api/groups/:id/messages/:msgId -> Message
+// groupsApi.messages.delete(id, msgId)      -> DELETE /api/groups/:id/messages/:msgId -> void
+// Server enforces that only a message's author can edit/delete it — the
+// isMine check in the UI below is just a convenience for hiding the controls.
+// NOTE: groupsApi.messages.list is a plain fetch (not a live subscription), so
+// messages from other members only show up on open/refresh for now.
 
 const serif = { fontFamily: "'Fraunces', serif" };
 
-const CATEGORIES = [
-  "Substance Recovery",
-  "Alcohol Recovery",
-  "Mental Health",
-  "Grief & Loss",
-  "Family Support",
-  "LGBTQ+ Recovery",
-  "Women's Group",
-  "Men's Group",
-  "Young Adults (18-30)",
-  "Faith-Based",
-  "Trauma & PTSD",
-  "General Wellness",
-];
-
-// Pastel category badges — kept distinct per category for scannability, but
-// pulled toward the warm/muted palette used across the rest of the product
-// rather than saturated stock Tailwind hues.
 const CATEGORY_STYLES = {
   "Substance Recovery": "bg-[#D8E8E4] text-[#0D6E64]",
   "Alcohol Recovery": "bg-[#F1DEBC] text-[#8a5a1f]",
@@ -79,100 +57,6 @@ const CATEGORY_STYLES = {
   "Faith-Based": "bg-[#F1E2D0] text-[#9a5f2a]",
   "Trauma & PTSD": "bg-[#DCE6F5] text-[#2f5da8]",
   "General Wellness": "bg-[#E3F5EC] text-[#0d9668]",
-};
-
-// TODO(backend): seed data only — remove once listGroups()/myGroups() are wired up.
-const MOCK_GROUPS = [
-  {
-    id: "g1",
-    name: "Morning Recovery Circle",
-    description:
-      "A calm space to check in before the day starts. We share wins, struggles, and coffee (virtually).",
-    category: "Substance Recovery",
-    organizerId: "u1",
-    organizerName: "Jordan",
-    memberCount: 24,
-    isPrivate: false,
-    meetingSchedule: "Every day, 7:00 AM EST via video",
-    isMember: true,
-  },
-  {
-    id: "g2",
-    name: "Sober Parents Support",
-    description:
-      "For parents balancing recovery with raising kids. Judgment-free, practical, and honest.",
-    category: "Family Support",
-    organizerId: "u2",
-    organizerName: "Alex",
-    memberCount: 41,
-    isPrivate: false,
-    meetingSchedule: "Tuesdays & Thursdays, 8:00 PM EST",
-    isMember: true,
-  },
-  {
-    id: "g3",
-    name: "Young Adults in Recovery",
-    description:
-      "18-30 crowd navigating school, work, and dating while staying sober. You're not alone in this.",
-    category: "Young Adults (18-30)",
-    organizerId: "u3",
-    organizerName: "Sam",
-    memberCount: 63,
-    isPrivate: false,
-    meetingSchedule: "Sundays, 6:00 PM EST",
-    isMember: false,
-  },
-  {
-    id: "g4",
-    name: "Grief After Loss",
-    description:
-      "Processing grief tied to addiction and loss, together. A gentle, listening-first group.",
-    category: "Grief & Loss",
-    organizerId: "u4",
-    organizerName: "Riley",
-    memberCount: 18,
-    isPrivate: true,
-    meetingSchedule: "Wednesdays, 7:30 PM EST",
-    isMember: false,
-  },
-  {
-    id: "g5",
-    name: "Women's Wellness Circle",
-    description:
-      "A women-only space focused on holistic recovery — mind, body, and community.",
-    category: "Women's Group",
-    organizerId: "u5",
-    organizerName: "Morgan",
-    memberCount: 37,
-    isPrivate: false,
-    meetingSchedule: "Mondays, 6:30 PM EST",
-    isMember: false,
-  },
-  {
-    id: "g6",
-    name: "Faith & Recovery",
-    description:
-      "Leaning on faith as part of the healing process. All denominations welcome.",
-    category: "Faith-Based",
-    organizerId: "u6",
-    organizerName: "Casey",
-    memberCount: 29,
-    isPrivate: false,
-    meetingSchedule: "Saturdays, 10:00 AM EST",
-    isMember: false,
-  },
-];
-
-// TODO(backend): seed data only — remove once getMessages()/sendMessage() are wired up.
-const MOCK_MESSAGES = {
-  g1: [
-    { id: "m1", authorId: "u1", authorName: "Jordan", text: "Good morning everyone! How'd last night go?", createdAt: Date.now() - 1000 * 60 * 62 },
-    { id: "m2", authorId: "u9", authorName: "Taylor", text: "Rough night but I made it through. Grateful for this group.", createdAt: Date.now() - 1000 * 60 * 48 },
-    { id: "m3", authorId: "u7", authorName: "Devon", text: "Proud of you, Taylor. That's what counts.", createdAt: Date.now() - 1000 * 60 * 40 },
-  ],
-  g2: [
-    { id: "m4", authorId: "u2", authorName: "Alex", text: "Reminder: meeting moved to 8pm tonight, not 7.", createdAt: Date.now() - 1000 * 60 * 200 },
-  ],
 };
 
 // External support groups — independent organizations Safe Haven does not run or
@@ -371,7 +255,7 @@ function GroupCard({ group, isOrganizer, onJoin, onLeave, onDelete, onOpenChat, 
 
 // Create group modal 
 
-function CreateGroupModal({ open, onClose, onCreate }) {
+function CreateGroupModal({ open, onClose, onCreate, categories }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -468,7 +352,7 @@ function CreateGroupModal({ open, onClose, onCreate }) {
               className="mt-1.5 w-full rounded-xl border border-[#12302E]/15 px-3 py-2.5 text-sm text-[#12302E] bg-white focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-shadow cursor-pointer"
             >
               <option value="">Select a category</option>
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -541,10 +425,14 @@ function GroupChat({ group, user, onBack, onLeave }) {
     let cancelled = false;
     setIsLoading(true);
     (async () => {
-      // TODO(backend): const data = await getMessages(group.id);
-      await new Promise((r) => setTimeout(r, 300)); // simulated fetch
-      if (!cancelled) setMessages(MOCK_MESSAGES[group.id] ?? []);
-      if (!cancelled) setIsLoading(false);
+      try {
+        const { data } = await groupsApi.messages.list(group.id);
+        if (!cancelled) setMessages(data);
+      } catch {
+        if (!cancelled) setMessages([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
@@ -561,8 +449,9 @@ function GroupChat({ group, user, onBack, onLeave }) {
     setIsSending(true);
     setDraft("");
 
+    const tempId = `tmp-${Date.now()}`;
     const optimistic = {
-      id: `tmp-${Date.now()}`,
+      id: tempId,
       authorId: uid,
       authorName: uname,
       text,
@@ -571,12 +460,12 @@ function GroupChat({ group, user, onBack, onLeave }) {
     setMessages((prev) => [...prev, optimistic]);
 
     try {
-      // TODO(backend): const saved = await sendMessage(group.id, text);
-      await new Promise((r) => setTimeout(r, 250)); // simulated send
-      // TODO(backend): reconcile optimistic message with `saved` from the server
-      // (swap the temp id for the real id, real timestamp, etc.)
+      const { data: saved } = await groupsApi.messages.send(group.id, text);
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? saved : m)));
     } catch {
-      // TODO(backend): surface a retry affordance and roll back the optimistic message on failure
+      // Roll back the optimistic message and give the text back so they can retry.
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setDraft(text);
     } finally {
       setIsSending(false);
     }
@@ -616,17 +505,12 @@ function GroupChat({ group, user, onBack, onLeave }) {
     if (!text || !editingMessageId) return;
     setIsSavingEdit(true);
     try {
-      // TODO(backend): const saved = await editMessage(group.id, editingMessageId, text);
-      await new Promise((r) => setTimeout(r, 250)); // simulated save
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === editingMessageId ? { ...m, text, editedAt: Date.now() } : m
-        )
-      );
+      const { data: saved } = await groupsApi.messages.edit(group.id, editingMessageId, text);
+      setMessages((prev) => prev.map((m) => (m.id === editingMessageId ? saved : m)));
       setEditingId(null);
       setEditDraft("");
     } catch {
-      // TODO(backend): surface an inline error and keep the editor open so the user can retry
+      // Keep the editor open with what they typed so they can retry.
     } finally {
       setIsSavingEdit(false);
     }
@@ -637,9 +521,11 @@ function GroupChat({ group, user, onBack, onLeave }) {
     setMessages((prev) => prev.filter((m) => m.id !== message.id));
     if (editingId === message.id) cancelEdit();
     try {
-      // TODO(backend): await deleteMessage(group.id, message.id);
+      await groupsApi.messages.delete(group.id, message.id);
     } catch {
-      // TODO(backend): roll back — re-insert `message` into state and surface an error
+      setMessages((prev) =>
+        [...prev, message].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      );
     }
   };
 
@@ -927,16 +813,34 @@ export default function Groups() {
   const [createOpen, setCreateOpen] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [activeGroup, setActiveGroup] = useState(null); // group currently open in chat
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setIsLoading(true);
-      // TODO(backend): const data = await listGroups();
-      await new Promise((r) => setTimeout(r, 300)); // simulated fetch
-      if (!cancelled) {
-        setGroups(MOCK_GROUPS);
-        setIsLoading(false);
+      try {
+        const { data } = await groupsApi.list();
+        if (!cancelled) setGroups(data);
+      } catch {
+        if (!cancelled) setGroups([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await groupsApi.categories();
+        if (!cancelled) setCategories(data);
+      } catch {
+        if (!cancelled) setCategories([]);
       }
     })();
     return () => {
@@ -963,11 +867,8 @@ export default function Groups() {
   const handleJoin = async (group) => {
     setBusyId(group.id);
     try {
-      // TODO(backend): await joinGroup(group.id);
-      await new Promise((r) => setTimeout(r, 400)); // simulated request
-      setGroups((prev) =>
-        prev.map((g) => (g.id === group.id ? { ...g, isMember: true, memberCount: g.memberCount + 1 } : g))
-      );
+      const { data: updated } = await groupsApi.join(group.id);
+      setGroups((prev) => prev.map((g) => (g.id === group.id ? updated : g)));
     } finally {
       setBusyId(null);
     }
@@ -976,13 +877,8 @@ export default function Groups() {
   const handleLeave = async (group) => {
     setBusyId(group.id);
     try {
-      // TODO(backend): await leaveGroup(group.id);
-      await new Promise((r) => setTimeout(r, 400)); // simulated request
-      setGroups((prev) =>
-        prev.map((g) =>
-          g.id === group.id ? { ...g, isMember: false, memberCount: Math.max(0, g.memberCount - 1) } : g
-        )
-      );
+      const { data: updated } = await groupsApi.leave(group.id);
+      setGroups((prev) => prev.map((g) => (g.id === group.id ? updated : g)));
       setActiveGroup((current) => (current?.id === group.id ? null : current));
     } finally {
       setBusyId(null);
@@ -990,22 +886,13 @@ export default function Groups() {
   };
 
   const handleDelete = async (group) => {
-    // TODO(backend): await deleteGroup(group.id);
+    await groupsApi.delete(group.id);
     setGroups((prev) => prev.filter((g) => g.id !== group.id));
     setActiveGroup((current) => (current?.id === group.id ? null : current));
   };
 
   const handleCreate = async (payload) => {
-    // TODO(backend): const created = await createGroup(payload);
-    await new Promise((r) => setTimeout(r, 500)); // simulated request
-    const created = {
-      id: `g-${Date.now()}`,
-      organizerId: currentUserId(user),
-      organizerName: currentUserName(user),
-      memberCount: 1,
-      isMember: true,
-      ...payload,
-    };
+    const { data: created } = await groupsApi.create(payload);
     setGroups((prev) => [created, ...prev]);
   };
 
@@ -1121,7 +1008,7 @@ export default function Groups() {
           className="rounded-xl border border-[#12302E]/15 px-3 py-2.5 text-sm text-[#12302E] focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-shadow bg-white cursor-pointer"
         >
           <option value="All">All Categories</option>
-          {CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
@@ -1180,7 +1067,12 @@ export default function Groups() {
         </div>
       )}
 
-      <CreateGroupModal open={createOpen} onClose={() => setCreateOpen(false)} onCreate={handleCreate} />
+      <CreateGroupModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreate={handleCreate}
+        categories={categories}
+      />
       </>
       )}
     </div>

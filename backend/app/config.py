@@ -14,13 +14,12 @@ class Config:
     SQLALCHEMY_DATABASE_URI = _normalize_db_url(os.getenv("DATABASE_URL"))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # --- JWT / session config ---
+    # JWT / session config 
     JWT_SECRET = os.getenv("JWT_SECRET")
     JWT_ACCESS_EXPIRES_SECONDS = int(os.getenv("JWT_ACCESS_EXPIRES_SECONDS", "900"))  # 15 min
     REFRESH_EXPIRES_DAYS = int(os.getenv("REFRESH_EXPIRES_DAYS", "30"))
 
-    # --- CORS ---
-    # Comma-separated list in .env for multiple origins, e.g.
+    #  CORS 
     # CORS_ALLOWED_ORIGINS=http://localhost:5173,https://safehaven.app
     CORS_ALLOWED_ORIGINS = [
         origin.strip()
@@ -28,7 +27,7 @@ class Config:
         if origin.strip()
     ]
 
-    # --- Refresh cookie config ---
+    #  Refresh cookie config 
     REFRESH_COOKIE_NAME = os.getenv("REFRESH_COOKIE_NAME", "refresh_token")
     # Default False so local dev over plain http works. Set COOKIE_SECURE=true
     # in your production .env once you're serving over https.

@@ -10,9 +10,9 @@ firebase-admin = "*"
 pyjwt = "*"
 werkzeug = "*"
 python-dotenv = "*"
+psycopg2-binary = "*"
 flask-sqlalchemy = "*"
 flask-migrate = "*"
-psycopg2-binary = "*"
 
 [dev-packages]
 
