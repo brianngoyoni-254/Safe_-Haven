@@ -10,6 +10,7 @@ from .models import (
     LibraryReading,
     VideoTopic,
     Video,
+    JournalEntry,
     Group,
     GroupMembership,
     GroupMessage,
@@ -260,6 +261,65 @@ def public_video_topic(topic):
             }
             for v in topic.videos
         ],
+    }
+
+
+# Journal 
+
+def list_journal_entries(user_id):
+    """A user's own entries, most recently created first — matches new
+    entries being prepended to the top of the list on the frontend."""
+    return (
+        JournalEntry.query.filter_by(user_id=user_id)
+        .order_by(JournalEntry.created_at.desc())
+        .all()
+    )
+
+
+def get_journal_entry(entry_id, user_id):
+    """Scoped to user_id so one user can never fetch, edit, or delete
+    another user's entry, even by guessing an id."""
+    return JournalEntry.query.filter_by(id=entry_id, user_id=user_id).first()
+
+
+def create_journal_entry(user_id, title, content, mood, tags):
+    entry = JournalEntry(
+        user_id=user_id,
+        title=title,
+        content=content,
+        mood=mood,
+        tags=tags,
+    )
+    db.session.add(entry)
+    db.session.commit()
+    return entry
+
+
+def update_journal_entry(entry, title, content, mood, tags):
+    entry.title = title
+    entry.content = content
+    entry.mood = mood
+    entry.tags = tags
+    db.session.commit()
+    return entry
+
+
+def delete_journal_entry(entry):
+    db.session.delete(entry)
+    db.session.commit()
+
+
+def public_journal_entry(entry):
+    """Shape a JournalEntry row for the client, matching what Journals.jsx
+    expects: { id, title, content, mood, tags, updatedAt }."""
+    return {
+        "id": entry.id,
+        "title": entry.title,
+        "content": entry.content,
+        "mood": entry.mood,
+        "tags": entry.tags or [],
+        "createdAt": entry.created_at.isoformat() if entry.created_at else None,
+        "updatedAt": entry.updated_at.isoformat() if entry.updated_at else None,
     }
 
 
