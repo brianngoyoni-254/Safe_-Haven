@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy.dialects.postgresql import ARRAY
+
 from app.extensions import db
 
 
@@ -108,17 +110,13 @@ class Resource(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=_uuid_str)
 
     name = db.Column(db.String(255), nullable=False)
-    # One of: Residential, Outpatient, Counseling, Public — kept as a plain
-    # string (not an Enum) so new categories can be added without a migration.
+
     type = db.Column(db.String(50), nullable=False, index=True)
     county = db.Column(db.String(80), nullable=False, index=True)
     region = db.Column(db.String(80), nullable=False, index=True)
     address = db.Column(db.String(500), nullable=False)
     phone = db.Column(db.String(30), nullable=True)
     website = db.Column(db.String(255), nullable=True)
-
-    # Town/area-level approximations unless a facility has been geocoded
-    # precisely — good enough for map pins and "centers near me" sorting.
     lat = db.Column(db.Float, nullable=False)
     lng = db.Column(db.Float, nullable=False)
 
@@ -230,6 +228,43 @@ class Video(db.Model):
 
     def __repr__(self):
         return f"<Video title={self.title!r}>"
+
+
+# Journal 
+class JournalEntry(db.Model):
+    """A private journal entry authored by a user. Unlike Group/GroupMessage,
+    there's no sharing model here — every query in store.py scopes by
+    user_id so one user can never read, edit, or delete another's entries."""
+
+    __tablename__ = "journal_entries"
+
+    id = db.Column(db.String(36), primary_key=True, default=_uuid_str)
+    user_id = db.Column(
+        db.String(36), db.ForeignKey("users.id"), nullable=False, index=True
+    )
+
+    title = db.Column(db.String(255), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    mood = db.Column(db.Integer, nullable=True)  # 1-5, validated in journal.py; optional
+
+    # Postgres array column — matches the string[] tags shape EntryForm.jsx
+    # builds client-side, no separate join table needed for simple tags.
+    tags = db.Column(ARRAY(db.String(50)), nullable=False, default=list)
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    def __repr__(self):
+        return f"<JournalEntry user={self.user_id!r} title={self.title!r}>"
 
 
 # Groups 
