@@ -26,7 +26,7 @@ def create_app():
     from .library import library_bp
     from .video_library import video_library_bp
     from .groups import groups_bp
-    from .seed_groups import seed_groups_command
+    from seed.seed_groups import seed_groups_command
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(users_bp, url_prefix="/api/users")

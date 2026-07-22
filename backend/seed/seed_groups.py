@@ -14,8 +14,8 @@ import click
 from flask.cli import with_appcontext
 from werkzeug.security import generate_password_hash
 
-from .extensions import db
-from .models import User, Group, GroupMembership, GroupMessage
+from app.extensions import db
+from app.models import User, Group, GroupMembership, GroupMessage
 
 DEMO_PASSWORD = "SafeHavenDemo123"
 

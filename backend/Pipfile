@@ -13,6 +13,7 @@ python-dotenv = "*"
 psycopg2-binary = "*"
 flask-sqlalchemy = "*"
 flask-migrate = "*"
+marshmallow = "*"
 
 [dev-packages]
 

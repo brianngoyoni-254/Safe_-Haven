@@ -3,8 +3,8 @@
 from app import create_app
 from app.extensions import db
 from app.models import LibraryTopic, LibraryReading, VideoTopic, Video
-from library_data import LIBRARY_TOPICS_SEED
-from video_data import VIDEO_TOPICS_SEED
+from backend.data.library_data import LIBRARY_TOPICS_SEED
+from backend.data.video_data import VIDEO_TOPICS_SEED
 
 
 def seed_library():
