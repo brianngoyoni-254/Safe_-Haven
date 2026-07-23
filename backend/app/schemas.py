@@ -9,7 +9,23 @@ class UserSchema(Schema):
     email = fields.Email(dump_only=True)
     username = fields.Str(dump_only=True)
     sobriety_start = fields.Date(dump_only=True, allow_none=True)
+    goals = fields.Str(dump_only=True, allow_none=True)
     created_at = fields.DateTime(dump_only=True)
+
+
+class ProfileUpdateInputSchema(Schema):
+    """Matches the payload Profile.jsx's handleSave() sends."""
+    username = fields.Str(required=True, validate=validate.Length(min=1))
+    sobrietyStart = fields.Date(
+        required=False, allow_none=True, load_default=None, data_key="sobrietyStart"
+    )
+    goals = fields.Str(required=False, allow_none=True, load_default=None)
+
+    @validates("sobrietyStart")
+    def not_in_future(self, value, **kwargs):
+        from datetime import date
+        if value and value > date.today():
+            raise ValidationError("sobrietyStart cannot be in the future")
 
 
 class RegisterInputSchema(Schema):

@@ -19,6 +19,10 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=True)
     firebase_uid = db.Column(db.String(128), unique=True, nullable=True, index=True)
     sobriety_start = db.Column(db.Date, nullable=True)
+    # Free-text "what does success look like for you" field on Profile.jsx —
+    # single value per user, so it lives directly on User rather than a
+    # separate table.
+    goals = db.Column(db.Text, nullable=True)
     created_at = db.Column(
         db.DateTime(timezone=True),
         nullable=False,

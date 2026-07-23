@@ -54,6 +54,8 @@ export const checkInApi = {
 export const usersApi = {
   setSobrietyStart: (recoveryStartDate) =>
     api.put("/api/users/me/sobriety-start", { recoveryStartDate }),
+  updateProfile: (data) => api.put("/api/users/me/profile", data),
+  // data: { username, sobrietyStart, goals } -> full updated user object
 };
 
 //  Milestones 
