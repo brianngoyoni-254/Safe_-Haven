@@ -55,6 +55,17 @@ def set_sobriety_start(user, on_date):
     return user
 
 
+def update_profile(user, username, sobriety_start, goals):
+    """Updates the editable fields on Profile.jsx in one call. sobriety_start
+    and goals may be None (cleared); username is always required/validated
+    by the route before this is called."""
+    user.username = username
+    user.sobriety_start = sobriety_start
+    user.goals = goals
+    db.session.commit()
+    return user
+
+
 def public_user(user):
     """Strip sensitive fields before sending a user object to the client."""
     return {
@@ -62,6 +73,7 @@ def public_user(user):
         "email": user.email,
         "username": user.username,
         "sobriety_start": user.sobriety_start.isoformat() if user.sobriety_start else None,
+        "goals": user.goals,
         "created_at": user.created_at.isoformat() if user.created_at else None,
     }
 

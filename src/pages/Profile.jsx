@@ -1,22 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../App";
+import { usersApi } from "../api";
 import { User, Save, LogOut, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
-
-// TODO(backend): replace the mock save below with a real API call, e.g.
-//   import { updateProfile } from "../api";
-// updateProfile({ username, sobrietyStart, goals }) -> PUT /api/profile
-//   -> { id, username, email, sobriety_start, goals }
-// Right now this page only updates the in-memory auth user via updateUser(),
-// so a page refresh will lose anything not already on the user object
-// (username / sobriety_start persist via context, "goals" does not yet).
 
 
 
 const serif = { fontFamily: "'Fraunces', serif" };
 
 // Deterministic fallback avatar color — same helper used in Layout.jsx,
-// but reusing the brand palette instead of arbitrary cyans/violets.
 // TODO(backend): prefer user.avatarColor once the API returns one.
 function colorFromName(name) {
   const palette = ["#0D6E64", "#0d9668", "#0e7c8c", "#1c7fa8", "#C98A3E", "#c2417a"];
@@ -47,9 +39,12 @@ export default function Profile() {
     setIsSaving(true);
     setIsSaved(false);
     try {
-      // TODO(backend): await updateProfile({ username, sobrietyStart: startDate || undefined, goals: goals || undefined });
-      await new Promise((resolve) => setTimeout(resolve, 500)); // simulated save
-      updateUser({ username, sobriety_start: startDate || null, goals: goals || "" });
+      const { data } = await usersApi.updateProfile({
+        username,
+        sobrietyStart: startDate || null,
+        goals: goals || null,
+      });
+      updateUser(data);
       setIsSaved(true);
     } catch {
       setError("Couldn't save your profile. Please try again.");
