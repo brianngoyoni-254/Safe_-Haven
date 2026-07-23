@@ -95,6 +95,16 @@ export const resourcesApi = {
   list: (params) => api.get("/api/resources", { params }),
 };
 
+// Crisis support 
+// No auth required on this one (see crisis.py) — the axios instance still
+// attaches a Bearer token if the user happens to be logged in, but the
+// request works either way.
+export const crisisApi = {
+  list: () => api.get("/api/crisis"),
+  // -> { emergencyLines: [{ id, name, numbers, desc }],
+  //      categories: [{ id, title, navLabel, icon, color, lines: [...] }] }
+};
+
 // Donations 
 // STK push is asynchronous on Safaricom's side: initiate() only confirms the
 // prompt was sent to the donor's phone. The actual PIN entry happens on their

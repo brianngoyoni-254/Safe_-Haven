@@ -10,6 +10,9 @@ from .models import (
     LibraryReading,
     VideoTopic,
     Video,
+    CrisisEmergencyLine,
+    CrisisCategory,
+    CrisisHotline,
     JournalEntry,
     Group,
     GroupMembership,
@@ -272,6 +275,51 @@ def public_video_topic(topic):
                 "url": v.url,
             }
             for v in topic.videos
+        ],
+    }
+
+
+# Crisis support 
+
+def list_crisis_emergency_lines():
+    """The top "immediate danger" lines, in curated display order."""
+    return CrisisEmergencyLine.query.order_by(CrisisEmergencyLine.position).all()
+
+
+def public_crisis_emergency_line(line):
+    return {
+        "id": line.id,
+        "name": line.name,
+        "numbers": line.numbers or [],
+        "desc": line.desc,
+    }
+
+
+def list_crisis_categories():
+    """All crisis support categories with their hotlines, in curated
+    display order."""
+    return CrisisCategory.query.order_by(CrisisCategory.position).all()
+
+
+def public_crisis_category(category):
+    """Shape a CrisisCategory (+ hotlines) for the client, matching the
+    SUPPORT_CATEGORIES shape Crisis.jsx used before this became a real
+    endpoint. `icon` is a lucide-react icon name resolved to a component
+    client-side, same as LibraryTopic."""
+    return {
+        "id": category.id,
+        "title": category.title,
+        "navLabel": category.nav_label,
+        "icon": category.icon,
+        "color": category.color,
+        "lines": [
+            {
+                "name": h.name,
+                "numbers": h.numbers or [],
+                "whatsapp": h.whatsapp,
+                "desc": h.desc,
+            }
+            for h in category.hotlines
         ],
     }
 
