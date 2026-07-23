@@ -27,7 +27,9 @@ def create_app():
     from .video_library import video_library_bp
     from .groups import groups_bp
     from .journal import journal_bp
+    from .crisis import crisis_bp
     from seed.seed_groups import seed_groups_command
+    from seed.seed_crisis import seed_crisis_command
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(users_bp, url_prefix="/api/users")
@@ -38,7 +40,9 @@ def create_app():
     app.register_blueprint(video_library_bp, url_prefix="/api/video-library")
     app.register_blueprint(groups_bp, url_prefix="/api/groups")
     app.register_blueprint(journal_bp, url_prefix="/api/journal")
+    app.register_blueprint(crisis_bp, url_prefix="/api/crisis")
 
     app.cli.add_command(seed_groups_command)
+    app.cli.add_command(seed_crisis_command)
 
     return app

@@ -9,108 +9,17 @@ import {
   MessageCircle,
   Wind,
   ShieldAlert,
+  Loader2,
 } from "lucide-react";
+import { crisisApi } from "../api";
 
-// TODO(backend): this is static reference content for now — no auth, no API
-// calls needed. If you later let orgs self-report new hotlines, this becomes
-// GET /api/crisis-resources instead of a hardcoded array.
-// Numbers below are real, published hotlines for Kenya, gathered from NACADA,
-// Childline Kenya, GVRC, Befrienders Kenya, EMKF, and Niskize's own public
-// contact pages. Verify periodically — hotline numbers do change over time.
+// Numbers seeded into the backend (seed_crisis.py) are real, published
+// hotlines for Kenya, gathered from NACADA, Childline Kenya, GVRC,
+// Befrienders Kenya, EMKF, and Niskize's own public contact pages. Verify
+// periodically — hotline numbers do change over time.
 
-const EMERGENCY_LINES = [
-  {
-    id: "police",
-    name: "Police / Ambulance Emergency",
-    numbers: ["999", "112"],
-    desc: "National emergency line for police, fire, and ambulance dispatch.",
-  },
-  {
-    id: "redcross",
-    name: "Kenya Red Cross Emergency",
-    numbers: ["1199"],
-    desc: "Kenya Red Cross Society emergency response and ambulance services.",
-  },
-];
+const CATEGORY_ICONS = { LifeBuoy, Pill, HeartHandshake, Baby };
 
-const SUPPORT_CATEGORIES = [
-  {
-    id: "mental-health",
-    title: "Suicide & Mental Health Crisis",
-    navLabel: "Suicide & mental health",
-    Icon: LifeBuoy,
-    color: "teal",
-    lines: [
-      {
-        name: "Befrienders Kenya",
-        numbers: ["0722 178 177"],
-        whatsapp: "254722178177",
-        desc: "Free, confidential emotional support by phone, SMS, and WhatsApp for anyone in distress or having thoughts of suicide.",
-      },
-      {
-        name: "EMKF Suicide Prevention & Crisis Helpline",
-        numbers: ["0800 723 253"],
-        desc: "Toll-free, nationwide crisis line run by Emergency Medicine Kenya Foundation.",
-      },
-      {
-        name: "Niskize Counseling Helpline",
-        numbers: ["0900 620 800"],
-        desc: "24-hour call center offering counseling for distress, grief, and substance use.",
-      },
-    ],
-  },
-  {
-    id: "substance-abuse",
-    title: "Alcohol & Drug Abuse",
-    navLabel: "Substance use",
-    Icon: Pill,
-    color: "blue",
-    lines: [
-      {
-        name: "NACADA National Helpline",
-        numbers: ["1192"],
-        desc: "Free, confidential, 24/7 counseling and referrals for drug and alcohol use, run by the National Authority for the Campaign Against Alcohol and Drug Abuse.",
-      },
-    ],
-  },
-  {
-    id: "gbv",
-    title: "Gender-Based Violence",
-    navLabel: "Gender-based violence",
-    Icon: HeartHandshake,
-    color: "rose",
-    lines: [
-      {
-        name: "National GBV Hotline",
-        numbers: ["1195"],
-        desc: "Toll-free national hotline for survivors of gender-based violence, available to all genders.",
-      },
-      {
-        name: "Gender Violence Recovery Centre (GVRC)",
-        numbers: ["0719 638 006", "0709 667 000"],
-        desc: "24/7 free medical treatment and psychosocial support for survivors, run by Nairobi Women's Hospital.",
-      },
-    ],
-  },
-  {
-    id: "child-protection",
-    title: "Child Protection",
-    navLabel: "Child protection",
-    Icon: Baby,
-    color: "violet",
-    lines: [
-      {
-        name: "Childline Kenya",
-        numbers: ["116"],
-        desc: "Kenya's only 24-hour, toll-free helpline for children experiencing abuse or distress. Also open to adults reporting on a child's behalf.",
-      },
-    ],
-  },
-];
-
-// One cohesive palette pulled from the rest of the app (teal, blue, rose,
-// violet already appear elsewhere — milestones, journal, mood) instead of
-// generic Tailwind stock colors, so this page still feels like Safe Haven.
 const COLOR_STYLES = {
   teal: {
     iconBg: "bg-[#D8E8E4]",
@@ -133,13 +42,6 @@ const COLOR_STYLES = {
     button: "bg-[#7c5cbf] hover:brightness-110",
   },
 };
-
-// Quick-jump chips so someone can go straight to the category they need
-// instead of scrolling past sections that don't apply to them.
-const NAV_ITEMS = [
-  { id: "emergency", label: "Emergency" },
-  ...SUPPORT_CATEGORIES.map((c) => ({ id: c.id, label: c.navLabel })),
-];
 
 function telHref(raw) {
   return `tel:${raw.replace(/\s+/g, "")}`;
@@ -248,6 +150,43 @@ function HotlineRow({ line, color }) {
 const serif = { fontFamily: "'Fraunces', serif" };
 
 export default function Crisis() {
+  const [emergencyLines, setEmergencyLines] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await crisisApi.list();
+        if (cancelled) return;
+        setEmergencyLines(data.emergencyLines ?? []);
+        setCategories(data.categories ?? []);
+      } catch {
+        if (!cancelled) setError("Couldn't load crisis resources right now.");
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const navItems = [
+    { id: "emergency", label: "Emergency" },
+    ...categories.map((c) => ({ id: c.id, label: c.navLabel })),
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto flex items-center justify-center gap-2 text-sm text-[#4A544C] py-16">
+        <Loader2 size={18} className="animate-spin" /> Loading crisis resources…
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -260,9 +199,15 @@ export default function Crisis() {
         </p>
       </div>
 
+      {error && (
+        <p className="text-sm text-[#8a2340] bg-[#FCE7EF] border border-[#8a2340]/15 rounded-xl px-3.5 py-2.5">
+          {error} The emergency numbers below are still worth calling directly: 999, 112, or 1199.
+        </p>
+      )}
+
       {/* Quick-jump nav */}
       <div className="flex gap-2 flex-wrap">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <a
             key={item.id}
             href={`#${item.id}`}
@@ -285,7 +230,7 @@ export default function Crisis() {
           </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {EMERGENCY_LINES.map((line) => (
+          {emergencyLines.map((line) => (
             <div key={line.id} className="bg-white rounded-[16px] p-4">
               <div className="flex items-center gap-2 mb-1">
                 <Siren className="w-4 h-4 text-[#993C1D]" />
@@ -320,9 +265,9 @@ export default function Crisis() {
           separated by hairlines, instead of a grid of separate bordered
           cards competing for attention. */}
       <div className="space-y-4">
-        {SUPPORT_CATEGORIES.map((cat) => {
+        {categories.map((cat) => {
           const styles = COLOR_STYLES[cat.color];
-          const Icon = cat.Icon;
+          const Icon = CATEGORY_ICONS[cat.icon] ?? LifeBuoy;
           return (
             <section
               key={cat.id}
