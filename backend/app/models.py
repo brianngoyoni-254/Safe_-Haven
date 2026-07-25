@@ -454,3 +454,54 @@ class GroupMessage(db.Model):
 
     def __repr__(self):
         return f"<GroupMessage group={self.group_id!r} author={self.author_id!r}>"
+
+
+# Donations 
+
+class Donation(db.Model):
+    """One M-Pesa donation attempt. A row is created the moment the STK
+    push is requested (status="pending"), then updated by the Safaricom
+    callback once the donor accepts/declines/times out on their phone.
+    user_id is nullable — donations don't require an account."""
+
+    __tablename__ = "donations"
+
+    id = db.Column(db.String(36), primary_key=True, default=_uuid_str)
+    user_id = db.Column(
+        db.String(36), db.ForeignKey("users.id"), nullable=True, index=True
+    )
+
+    amount = db.Column(db.Integer, nullable=False)  # whole KES, validated >=1 in schema
+    phone = db.Column(db.String(15), nullable=False)  # normalized 2547XXXXXXXX / 2541XXXXXXXX
+    name = db.Column(db.String(120), nullable=True)  # null when anonymous
+    message = db.Column(db.Text, nullable=True)
+    anonymous = db.Column(db.Boolean, nullable=False, default=False)
+    frequency = db.Column(db.String(20), nullable=False, default="once")  # once | monthly
+
+    # pending -> success | failed. "pending" is what Donations.jsx polls on.
+    status = db.Column(db.String(20), nullable=False, default="pending", index=True)
+
+    # Identifiers from Safaricom's STK push response, used to match the
+    # async callback back to this row.
+    checkout_request_id = db.Column(db.String(60), unique=True, nullable=True, index=True)
+    merchant_request_id = db.Column(db.String(60), nullable=True)
+
+    # Populated from the callback once Safaricom resolves the transaction.
+    mpesa_receipt_number = db.Column(db.String(30), nullable=True)
+    result_code = db.Column(db.Integer, nullable=True)
+    result_desc = db.Column(db.String(255), nullable=True)
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    def __repr__(self):
+        return f"<Donation id={self.id!r} status={self.status!r} amount={self.amount!r}>"
