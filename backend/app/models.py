@@ -359,9 +359,22 @@ class Group(db.Model):
     organizer = db.relationship("User")
 
     is_private = db.Column(db.Boolean, nullable=False, default=False)
-    # Free-text, e.g. "Tuesdays & Thursdays, 8:00 PM EST" — matches how the
-    # frontend renders it verbatim, no structured recurrence for now.
+    # Free-text, e.g. "Tuesdays & Thursdays, 8:00 PM EST" — still the label
+    # rendered verbatim on Groups.jsx.
     meeting_schedule = db.Column(db.String(255), nullable=True)
+
+    # Structured recurrence, used by dashboard.py to compute the actual next
+    # session date/time (meeting_schedule alone is free text and can't be
+    # parsed reliably). All three are optional — a group with no structured
+    # schedule simply never surfaces in "upcoming session".
+    #   meeting_days_of_week: ISO weekday ints, Monday=1 ... Sunday=7,
+    #       e.g. Tue/Thu -> [2, 4]
+    #   meeting_time: local start time paired with the days above
+    #   meeting_timezone: IANA tz name (e.g. "Africa/Nairobi") the days/time
+    #       are interpreted in
+    meeting_days_of_week = db.Column(ARRAY(db.Integer), nullable=True)
+    meeting_time = db.Column(db.Time, nullable=True)
+    meeting_timezone = db.Column(db.String(50), nullable=True, default="Africa/Nairobi")
 
     created_at = db.Column(
         db.DateTime(timezone=True),

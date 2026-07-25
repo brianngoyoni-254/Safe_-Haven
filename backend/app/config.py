@@ -1,18 +1,22 @@
-# app/config.py
+
 import os
 
 
 def _normalize_db_url(url):
-    """Some providers (Heroku, older Render URLs) hand out 'postgres://',
-    but SQLAlchemy 1.4+ requires 'postgresql://'."""
     if url and url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
     return url
 
-
 class Config:
     SQLALCHEMY_DATABASE_URI = _normalize_db_url(os.getenv("DATABASE_URL"))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Logging 
+    # DEBUG / INFO / WARNING / ERROR. Bump to DEBUG locally when chasing a bug.
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    # Pretty console output locally; set LOG_JSON=true in production so logs
+    # come out as one JSON object per line, ready for a log aggregator.
+    LOG_JSON = os.getenv("LOG_JSON", "false").lower() == "true"
 
     # JWT / session config 
     JWT_SECRET = os.getenv("JWT_SECRET")
@@ -20,11 +24,9 @@ class Config:
     REFRESH_EXPIRES_DAYS = int(os.getenv("REFRESH_EXPIRES_DAYS", "30"))
 
     #  CORS 
-    # CORS_ALLOWED_ORIGINS=http://localhost:5173,https://safehaven.app
+    _cors_raw = os.getenv("CORS_ALLOWED_ORIGINS") or os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
     CORS_ALLOWED_ORIGINS = [
-        origin.strip()
-        for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
-        if origin.strip()
+        origin.strip() for origin in _cors_raw.split(",") if origin.strip()
     ]
 
     #  Refresh cookie config 

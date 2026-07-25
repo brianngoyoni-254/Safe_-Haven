@@ -1,31 +1,4 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-
-# Environment Variables 
-
+# Environment variables 
 .env
 .env.*
 !.env.example
@@ -33,137 +6,105 @@ dist-ssr
 !.env.production.example
 !.env.local.example
 
+# Secrets 
+backend/secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
 
-# Node / React
-
-
-node_modules/
+# Logs 
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+pytestdebug.log
 
+# Node / React / Vite 
+node_modules/
 dist/
-build/
 dist-ssr/
-
+build/
 .vite/
 .cache/
-
+.parcel-cache/
+.eslintcache
 *.tsbuildinfo
+vite.svg
+*.local
 
-
-# Python
-
-
+# Python 
 __pycache__/
 *.py[cod]
 *$py.class
-
 *.so
-
 .Python
 
-
-# Virtual Environments
-
-
+# Virtual environments 
 venv/
 .venv/
 ENV/
 env/
 env.bak/
 venv.bak/
+.python-version
 
-
-# Flask
-
-
+# Flask 
 instance/
 .webassets-cache/
 
+# Databases / local dumps 
 *.db
 *.sqlite
 *.sqlite3
-
-
-# PostgreSQL
-
-
-# Ignore local PostgreSQL dumps
 *.sql
 *.dump
 *.backup
 
-
-# Testing
-
-
+# Testing 
 .pytest_cache/
 .coverage
 .coverage.*
 htmlcov/
-
 .tox/
 .nox/
 
-pytestdebug.log
-
-
-# Type Checkers / Linters
-
-
+# Type checkers / linters 
 .mypy_cache/
 .pyre/
 .pytype/
 .ruff_cache/
 
-
-# Jupyter
-
-
+# Jupyter 
 .ipynb_checkpoints/
 
-
-# Build / Packaging
-
-
-build/
+# Python packaging 
 develop-eggs/
 downloads/
 eggs/
 .eggs/
-
 lib/
 lib64/
-
 parts/
 sdist/
-
 var/
 wheels/
-
 pip-wheel-metadata/
-
 *.egg-info/
 *.egg
 
-
-# Coverage
-
-
+# Coverage 
 coverage/
 coverage.xml
 
-
-# IDEs
-
+# IDEs / editors 
 .vscode/*
 !.vscode/extensions.json
-
 .idea/
-
 *.suo
 *.ntvs*
 *.njsproj
@@ -171,97 +112,26 @@ coverage.xml
 *.sw?
 *.iml
 
-
-# macOS
-
-
+# OS files 
 .DS_Store
 .AppleDouble
 .LSOverride
-
-
-# Windows
-
-
 Thumbs.db
 Desktop.ini
-
-
-# Linux
-
-
 *~
 
-
-# Logs
-
-
-logs/
-*.log
-
-
-# Temporary Files
-
-
+# Temporary / misc 
 tmp/
 temp/
 *.tmp
-
-
-# Cache
-
-
-.cache/
-.parcel-cache/
-.eslintcache
-
-
-# React/Vite
-
-
-vite.svg
-
-
-# Secrets
-
-
-*.pem
-*.key
-*.crt
-*.p12
-*.pfx
-
-
-# Docker
-
-
-docker-compose.override.yml
-
-
-# Misc
-
 *.pid
 *.seed
 *.pid.lock
-
-
-# Local configuration
-
-
-*.local
 .local/
 
-
-# Optional uploads folder (if generated at runtime)
-
-
+# Uploads / media generated at runtime 
 uploads/
 media/
 
-
-# Ignore Python dotenv cache
-
-
-.python-version
-# Firebase / secrets
-backend/secrets/
+# Docker 
+docker-compose.override.yml
