@@ -30,4 +30,5 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
           FLASK_APP: run.py
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: flask db upgrade
