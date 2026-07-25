@@ -1,4 +1,3 @@
-
 import os
 
 
@@ -34,6 +33,30 @@ class Config:
     # Default False so local dev over plain http works. Set COOKIE_SECURE=true
     # in your production .env once you're serving over https.
     COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+
+    #  M-Pesa (Daraja) 
+    # MPESA_BASE_URL points at Safaricom's sandbox or production host —
+    # swap the whole URL rather than toggling an env flag, since sandbox and
+    # production are genuinely different hosts with different behavior.
+    MPESA_BASE_URL = os.getenv("MPESA_BASE_URL", "https://sandbox.safaricom.co.ke")
+    MPESA_CONSUMER_KEY = os.getenv("MPESA_CONSUMER_KEY")
+    MPESA_CONSUMER_SECRET = os.getenv("MPESA_CONSUMER_SECRET")
+    MPESA_SHORTCODE = os.getenv("MPESA_SHORTCODE")
+    MPESA_PASSKEY = os.getenv("MPESA_PASSKEY")
+    MPESA_TRANSACTION_TYPE = os.getenv("MPESA_TRANSACTION_TYPE", "CustomerPayBillOnline")
+    # Must be a publicly reachable HTTPS URL — Safaricom POSTs the STK push
+    # result here asynchronously. In local dev this is an ngrok tunnel; the
+    # path here (/api/payments/mpesa/callback) must match the route in
+    # app/payments.py exactly.
+    MPESA_CALLBACK_URL = os.getenv("MPESA_CALLBACK_URL")
+
+    if not all([MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_SHORTCODE, MPESA_PASSKEY, MPESA_CALLBACK_URL]):
+        raise RuntimeError(
+            "M-Pesa is not fully configured. Set MPESA_CONSUMER_KEY, "
+            "MPESA_CONSUMER_SECRET, MPESA_SHORTCODE, MPESA_PASSKEY, and "
+            "MPESA_CALLBACK_URL in your .env — get these from your app on "
+            "https://developer.safaricom.co.ke."
+        )
 
     if not JWT_SECRET:
         raise RuntimeError(
