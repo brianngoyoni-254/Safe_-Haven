@@ -1,4 +1,5 @@
-# app/schemas.py
+import re
+
 from marshmallow import Schema, fields, validate, validates, ValidationError
 
 # Users 
@@ -199,3 +200,47 @@ class GroupMessageSchema(Schema):
 
 class GroupMessageInputSchema(Schema):
     text = fields.Str(required=True, validate=validate.Length(min=1))
+
+
+# Donations 
+
+_KENYAN_PHONE_RE = re.compile(r"^254(7|1)\d{8}$")
+
+
+def _normalize_kenyan_phone(raw):
+    """Mirrors normalizePhone() in api.js / Donations.jsx so both sides agree
+    on the canonical 2547XXXXXXXX / 2541XXXXXXXX shape Safaricom expects."""
+    digits = re.sub(r"[\s-]", "", raw or "")
+    if digits.startswith("+254"):
+        digits = digits[1:]
+    elif digits.startswith("0"):
+        digits = "254" + digits[1:]
+    return digits
+
+
+class DonationInputSchema(Schema):
+    """Matches the payload Donations.jsx's handlePay() sends."""
+    amount = fields.Int(required=True, validate=validate.Range(min=1))
+    phone = fields.Str(required=True)
+    name = fields.Str(required=False, allow_none=True, load_default=None)
+    message = fields.Str(required=False, allow_none=True, load_default=None)
+    anonymous = fields.Bool(load_default=False)
+    frequency = fields.Str(
+        load_default="once", validate=validate.OneOf(["once", "monthly"])
+    )
+
+    @validates("phone")
+    def valid_kenyan_phone(self, value, **kwargs):
+        if not _KENYAN_PHONE_RE.match(_normalize_kenyan_phone(value)):
+            raise ValidationError("Enter a valid Safaricom number, e.g. 0722 123 456")
+
+
+class DonationSchema(Schema):
+    """Matches public_donation() in store.py."""
+    id = fields.Str(dump_only=True)
+    amount = fields.Int(dump_only=True)
+    status = fields.Str(dump_only=True)
+    frequency = fields.Str(dump_only=True)
+    anonymous = fields.Bool(dump_only=True)
+    mpesa_receipt_number = fields.Str(data_key="mpesaReceiptNumber", dump_only=True, allow_none=True)
+    created_at = fields.DateTime(data_key="createdAt", dump_only=True)

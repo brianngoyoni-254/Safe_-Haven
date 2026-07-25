@@ -40,6 +40,8 @@ def create_app():
     from .groups import groups_bp
     from .journal import journal_bp
     from .crisis import crisis_bp
+    from .donations import donations_bp
+    from .payments import payments_bp
     from seed.seed_groups import seed_groups_command
     from seed.seed_crisis import seed_crisis_command
 
@@ -53,6 +55,9 @@ def create_app():
     app.register_blueprint(groups_bp, url_prefix="/api/groups")
     app.register_blueprint(journal_bp, url_prefix="/api/journal")
     app.register_blueprint(crisis_bp, url_prefix="/api/crisis")
+    app.register_blueprint(donations_bp, url_prefix="/api/donations")
+    # url_prefix must match MPESA_CALLBACK_URL's path in .env exactly
+    app.register_blueprint(payments_bp, url_prefix="/api/payments")
 
     app.cli.add_command(seed_groups_command)
     app.cli.add_command(seed_crisis_command)

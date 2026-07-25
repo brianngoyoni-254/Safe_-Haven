@@ -8,7 +8,6 @@ from .store import get_user_by_id
 
 
 def require_auth(fn):
-   
 
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -29,6 +28,28 @@ def require_auth(fn):
             return jsonify({"error": "User not found"}), 401
 
         g.user = user
+        return fn(*args, **kwargs)
+
+    return wrapper
+
+
+def optional_auth(fn):
+    """Like require_auth, but never blocks the request. If a valid Bearer
+    token is present, g.user is set; otherwise g.user is None. Used by
+    routes that work for both logged-in and anonymous callers, e.g.
+    donations."""
+
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        header = request.headers.get("Authorization", "")
+        g.user = None
+        if header.startswith("Bearer "):
+            token = header.removeprefix("Bearer ").strip()
+            try:
+                payload = decode_access_token(token)
+                g.user = get_user_by_id(payload["sub"])
+            except jwt.PyJWTError:
+                g.user = None
         return fn(*args, **kwargs)
 
     return wrapper
