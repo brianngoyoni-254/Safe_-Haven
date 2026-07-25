@@ -17,6 +17,7 @@ from .models import (
     Group,
     GroupMembership,
     GroupMessage,
+    Donation,
 )
 
 
@@ -541,4 +542,58 @@ def public_message(message):
         "text": message.text,
         "createdAt": message.created_at.isoformat() if message.created_at else None,
         "editedAt": message.edited_at.isoformat() if message.edited_at else None,
+    }
+
+# Donations 
+
+def create_donation(user_id, amount, phone, name, message, anonymous, frequency):
+    donation = Donation(
+        user_id=user_id,
+        amount=amount,
+        phone=phone,
+        name=name,
+        message=message,
+        anonymous=anonymous,
+        frequency=frequency,
+    )
+    db.session.add(donation)
+    db.session.commit()
+    return donation
+
+
+def attach_checkout_ids(donation, checkout_request_id, merchant_request_id):
+    """Called right after Safaricom accepts the STK push request, so the
+    later callback (which only carries CheckoutRequestID) can be matched
+    back to this row."""
+    donation.checkout_request_id = checkout_request_id
+    donation.merchant_request_id = merchant_request_id
+    db.session.commit()
+    return donation
+
+
+def get_donation_by_checkout_id(checkout_request_id):
+    return Donation.query.filter_by(checkout_request_id=checkout_request_id).first()
+
+
+def mark_donation_result(donation, status, result_code=None, result_desc=None, mpesa_receipt_number=None):
+    donation.status = status
+    donation.result_code = result_code
+    donation.result_desc = result_desc
+    if mpesa_receipt_number:
+        donation.mpesa_receipt_number = mpesa_receipt_number
+    db.session.commit()
+    return donation
+
+
+def public_donation(donation):
+    """Shape a Donation row for the client. Only status is actually polled
+    by Donations.jsx, but the rest is here for an admin view later."""
+    return {
+        "id": donation.id,
+        "amount": donation.amount,
+        "status": donation.status,
+        "frequency": donation.frequency,
+        "anonymous": donation.anonymous,
+        "mpesaReceiptNumber": donation.mpesa_receipt_number,
+        "createdAt": donation.created_at.isoformat() if donation.created_at else None,
     }

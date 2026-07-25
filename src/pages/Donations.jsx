@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Heart,
   Smartphone,
@@ -15,23 +15,14 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { donationsApi } from "../api";
 
-// TODO(backend): wire this page up to real endpoints, e.g. in api.js:
-//
-//   export const donationsApi = {
-//     initiateStkPush: (data) => api.post("/api/donations/mpesa/stk-push", data),
-//     //   data: { amount, phone, name, message, anonymous, frequency }
-//     //   -> { checkoutRequestId }
-//     status: (checkoutRequestId) =>
-//       api.get(`/api/donations/mpesa/status/${checkoutRequestId}`),
-//     //   -> { status: "pending" | "success" | "failed" }
-//   };
-//
-// STK push is asynchronous on Safaricom's side — the initiate call only
-// confirms the prompt was sent to the phone. The actual PIN entry happens
-// on the user's device, so the real flow polls `status` every few seconds
-// (or listens on a websocket/callback) until it resolves. Below this is
-// simulated with a timeout so the page is fully clickable/demoable.
+// STK push is asynchronous on Safaricom's side — initiate() only confirms
+// the prompt was sent to the donor's phone. The actual PIN entry happens on
+// their device, so we poll status() every few seconds with the returned
+// checkoutRequestId until it resolves to "success" or "failed"/timeout.
+const POLL_INTERVAL_MS = 3000;
+const POLL_TIMEOUT_MS = 120000; // give up after 2 min if the callback never lands
 
 const serif = { fontFamily: "'Fraunces', serif" };
 
@@ -395,6 +386,14 @@ export default function Donations() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
+  const pollTimerRef = useRef(null);
+  const pollDeadlineRef = useRef(null);
+
+  useEffect(() => {
+    // Stop any in-flight polling if the user navigates away mid-payment.
+    return () => clearTimeout(pollTimerRef.current);
+  }, []);
+
   const finalAmount = useMemo(() => {
     if (customAmount) {
       const n = parseInt(customAmount, 10);
@@ -403,26 +402,46 @@ export default function Donations() {
     return amount;
   }, [amount, customAmount]);
 
+  const pollStatus = async (checkoutRequestId) => {
+    if (Date.now() > pollDeadlineRef.current) {
+      setStatus("idle");
+      setError("This is taking longer than expected. If you entered your PIN, check your M-Pesa messages — otherwise, please try again.");
+      return;
+    }
+
+    try {
+      const { data } = await donationsApi.status(checkoutRequestId);
+      if (data.status === "success") {
+        setStatus("success");
+      } else if (data.status === "failed") {
+        setStatus("idle");
+        setError("The payment wasn't completed. Please try again.");
+      } else {
+        pollTimerRef.current = setTimeout(() => pollStatus(checkoutRequestId), POLL_INTERVAL_MS);
+      }
+    } catch {
+      pollTimerRef.current = setTimeout(() => pollStatus(checkoutRequestId), POLL_INTERVAL_MS);
+    }
+  };
+
   const handlePay = async () => {
     setError("");
     setStatus("sending");
     try {
-      // TODO(backend): replace with donationsApi.initiateStkPush({
-      //   amount: finalAmount,
-      //   phone: normalizePhone(phone),
-      //   name: anonymous ? undefined : name || undefined,
-      //   message: message || undefined,
-      //   anonymous,
-      //   frequency,
-      // }) -> { checkoutRequestId }, then poll donationsApi.status(checkoutRequestId)
-      // every ~3s until it resolves to "success" or "failed"/timeout.
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      const { data } = await donationsApi.initiate({
+        amount: finalAmount,
+        phone: normalizePhone(phone),
+        name: anonymous ? undefined : name || undefined,
+        message: message || undefined,
+        anonymous,
+        frequency,
+      });
       setStatus("pending");
-      await new Promise((resolve) => setTimeout(resolve, 2200));
-      setStatus("success");
-    } catch {
+      pollDeadlineRef.current = Date.now() + POLL_TIMEOUT_MS;
+      pollTimerRef.current = setTimeout(() => pollStatus(data.checkoutRequestId), POLL_INTERVAL_MS);
+    } catch (err) {
       setStatus("idle");
-      setError("Couldn't reach M-Pesa right now. Please try again.");
+      setError(err?.response?.data?.error || "Couldn't reach M-Pesa right now. Please try again.");
     }
   };
 
