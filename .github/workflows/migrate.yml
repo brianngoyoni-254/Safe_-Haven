@@ -1,3 +1,4 @@
+ source /home/brian-ngoyoni/Safe-haven/.venv/bin/activate
 name: Run DB Migrations
 
 on:
@@ -29,4 +30,10 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
           FLASK_APP: run.py
+
+          MPESA_CONSUMER_KEY: ${{ secrets.MPESA_CONSUMER_KEY }}
+          MPESA_CONSUMER_SECRET: ${{ secrets.MPESA_CONSUMER_SECRET }}
+          MPESA_SHORTCODE: ${{ secrets.MPESA_SHORTCODE }}
+          MPESA_PASSKEY: ${{ secrets.MPESA_PASSKEY }}
+          MPESA_CALLBACK_URL: ${{ secrets.MPESA_CALLBACK_URL }}
         run: flask db upgrade
