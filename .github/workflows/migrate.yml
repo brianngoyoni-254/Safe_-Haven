@@ -1,0 +1,31 @@
+name: Run DB Migrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/migrations/versions/**'
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          pip install pipenv
+          pipenv install --deploy --system
+
+      - name: Run Flask-Migrate upgrade
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+          FLASK_APP: run.py
+        run: flask db upgrade
