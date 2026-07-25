@@ -1,4 +1,4 @@
- source /home/brian-ngoyoni/Safe-haven/.venv/bin/activate
+
 name: Run DB Migrations
 
 on:
