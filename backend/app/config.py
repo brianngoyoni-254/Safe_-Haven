@@ -50,13 +50,27 @@ class Config:
     # app/payments.py exactly.
     MPESA_CALLBACK_URL = os.getenv("MPESA_CALLBACK_URL")
 
-    if not all([MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_SHORTCODE, MPESA_PASSKEY, MPESA_CALLBACK_URL]):
-        raise RuntimeError(
-            "M-Pesa is not fully configured. Set MPESA_CONSUMER_KEY, "
-            "MPESA_CONSUMER_SECRET, MPESA_SHORTCODE, MPESA_PASSKEY, and "
-            "MPESA_CALLBACK_URL in your .env — get these from your app on "
-            "https://developer.safaricom.co.ke."
-        )
+    @classmethod
+    def validate_mpesa(cls):
+        """Call this before actually using M-Pesa (e.g. at the start of the
+        function that initiates an STK push or fetches an OAuth token) —
+        NOT at app boot. This keeps migrations, tests, and other non-payment
+        code paths from requiring M-Pesa credentials just to start the app."""
+        missing = [
+            name for name, value in [
+                ("MPESA_CONSUMER_KEY", cls.MPESA_CONSUMER_KEY),
+                ("MPESA_CONSUMER_SECRET", cls.MPESA_CONSUMER_SECRET),
+                ("MPESA_SHORTCODE", cls.MPESA_SHORTCODE),
+                ("MPESA_PASSKEY", cls.MPESA_PASSKEY),
+                ("MPESA_CALLBACK_URL", cls.MPESA_CALLBACK_URL),
+            ] if not value
+        ]
+        if missing:
+            raise RuntimeError(
+                f"M-Pesa is not fully configured. Missing: {', '.join(missing)}. "
+                "Set these in your .env — get them from your app on "
+                "https://developer.safaricom.co.ke."
+            )
 
     if not JWT_SECRET:
         raise RuntimeError(

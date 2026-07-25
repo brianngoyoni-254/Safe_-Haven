@@ -12,7 +12,29 @@ class MpesaError(Exception):
     """Raised when Safaricom's API can't be reached or returns an error."""
 
 
+def _require_mpesa_config():
+    """Call this at the start of any function that actually talks to
+    Safaricom's API — NOT at app boot. Keeps migrations, tests, and other
+    non-payment code paths from requiring M-Pesa credentials just to run."""
+    required = {
+        "MPESA_CONSUMER_KEY": current_app.config.get("MPESA_CONSUMER_KEY"),
+        "MPESA_CONSUMER_SECRET": current_app.config.get("MPESA_CONSUMER_SECRET"),
+        "MPESA_SHORTCODE": current_app.config.get("MPESA_SHORTCODE"),
+        "MPESA_PASSKEY": current_app.config.get("MPESA_PASSKEY"),
+        "MPESA_CALLBACK_URL": current_app.config.get("MPESA_CALLBACK_URL"),
+    }
+    missing = [name for name, value in required.items() if not value]
+    if missing:
+        raise MpesaError(
+            f"M-Pesa is not fully configured. Missing: {', '.join(missing)}. "
+            "Set these in your .env — get them from your app on "
+            "https://developer.safaricom.co.ke."
+        )
+
+
 def get_access_token():
+    _require_mpesa_config()
+
     consumer_key = current_app.config["MPESA_CONSUMER_KEY"]
     consumer_secret = current_app.config["MPESA_CONSUMER_SECRET"]
     base_url = current_app.config["MPESA_BASE_URL"]
@@ -46,7 +68,7 @@ def initiate_stk_push(phone, amount, account_reference, description):
     e.g. {"MerchantRequestID": ..., "CheckoutRequestID": ...,
     "ResponseCode": "0", "ResponseDescription": "...", "CustomerMessage": "..."}
     on success — check ResponseCode == "0" for actual success."""
-    token = get_access_token()
+    token = get_access_token()  # already validates config
     password, timestamp = _password_and_timestamp()
     shortcode = current_app.config["MPESA_SHORTCODE"]
     base_url = current_app.config["MPESA_BASE_URL"]
@@ -85,7 +107,7 @@ def query_stk_status(checkout_request_id):
     """Optional: active poll of Safaricom's own status, as a fallback for
     when the callback never arrives (e.g. local dev without a public
     callback URL). Not wired into the routes by default."""
-    token = get_access_token()
+    token = get_access_token()  # already validates config
     password, timestamp = _password_and_timestamp()
     shortcode = current_app.config["MPESA_SHORTCODE"]
     base_url = current_app.config["MPESA_BASE_URL"]
