@@ -79,10 +79,17 @@ def login():
     password = data.get("password") or ""
 
     user = get_user_by_email(email)
-    if not user or not user.password_hash:
-        return jsonify({"error": "Incorrect email or password"}), 401
+
+    if not user:
+        return jsonify({"error": "No account found with that email. Please register first."}), 404
+
+    if not user.password_hash:
+        # Account exists but was created via Google/Firebase — there's no
+        # password to check against.
+        return jsonify({"error": "This email is registered via Google sign-in. Use Continue with Google instead."}), 401
+
     if not check_password_hash(user.password_hash, password):
-        return jsonify({"error": "Incorrect email or password"}), 401
+        return jsonify({"error": "Incorrect password"}), 401
 
     return _issue_session_response(user)
 
