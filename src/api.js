@@ -63,6 +63,13 @@ export const milestonesApi = {
   list: () => api.get("/api/milestones"),
 };
 
+// Dashboard 
+// Single aggregate endpoint backing Dashboard.jsx — replaces separate
+// checkIns/todayCheckIn/milestones/upcomingSession mock state with one call.
+export const dashboardApi = {
+  get: () => api.get("/api/dashboard"),
+  // -> { checkIns, todayCheckIn, earnedMilestones, upcomingSession }
+};
 // Groups 
 export const groupsApi = {
   list:       ()               => api.get("/api/groups"),

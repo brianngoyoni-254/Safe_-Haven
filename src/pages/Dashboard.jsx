@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../App";
+import { dashboardApi } from "../api"; 
 import {
   Shield,
   Heart,
@@ -25,15 +26,6 @@ import {
   Clock,
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-
-// TODO(backend): replace all mock data below with real API calls, e.g.
-//   import { getRecentCheckIns, getEarnedMilestones, getTodayCheckIn } from "../api";
-// getRecentCheckIns()   -> GET /api/checkins/recent  -> [{ date, mood, cravingLevel, soberToday, notes }]
-// getTodayCheckIn()     -> GET /api/checkins/today    -> { mood, cravingLevel, soberToday, notes } | null
-// Milestones are derived from soberDays on the client (same approach as Milestones.jsx)
-// rather than fetched separately, so the two pages always agree.
-
-
 
 const serif = { fontFamily: "'Fraunces', serif" };
 
@@ -155,14 +147,44 @@ function MoodChart({ checkIns }) {
 export default function Dashboard() {
   const { user } = useAuth();
 
-  // TODO(backend): seed from getRecentCheckIns() / getTodayCheckIn() instead of these mocks.
-  const [checkIns] = useState([]);
-  const [todayCheckIn] = useState(null);
+  // Real dashboard data from GET /api/dashboard, replacing the old mock
+  // useState([]) / useState(null) placeholders.
+  const [checkIns, setCheckIns] = useState([]);
+  const [todayCheckIn, setTodayCheckIn] = useState(null);
+  const [upcomingSession, setUpcomingSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // TODO(backend): seed from getUpcomingGroupSession() -> the next scheduled
-  // session among groups the user has joined, e.g.
-  //   { groupName, groupId, time, meetsToday }
-  const [upcomingSession] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDashboard() {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data } = await dashboardApi.get();
+        if (cancelled) return;
+        setCheckIns(data.checkIns ?? []);
+        setTodayCheckIn(data.todayCheckIn ?? null);
+        setUpcomingSession(data.upcomingSession ?? null);
+        // Note: data.earnedMilestones from the backend isn't used directly —
+        // the earnedMilestones below is still derived client-side from
+        // soberDays so it can carry the Icon/color/bg used for rendering,
+        // which don't exist in the database. The backend call to
+        // sync_earned_milestones already persisted any newly-earned rows;
+        // we just don't need its return value here.
+      } catch (err) {
+        if (!cancelled) setError("Couldn't load your dashboard. Please refresh.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadDashboard();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const quote = useMemo(() => QUOTES[new Date().getDate() % QUOTES.length], []);
 
@@ -273,6 +295,24 @@ export default function Dashboard() {
       bg: "#FCE7EF",
     },
   ];
+
+  // Simple loading/error states before the real layout — avoids a flash of
+  // empty cards while the /api/dashboard request is in flight.
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto py-16 text-center text-[#4A544C] text-sm">
+        Loading your dashboard…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto py-16 text-center text-sm text-[#c2417a]">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
