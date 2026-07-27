@@ -1,0 +1,140 @@
+from app.donations.models import Donation
+from app.donations.mpesa import mpesa_service
+from app.donations.schemas import DonationSchema
+from app.users.models import User
+from app.extensions import db
+from app.core.exceptions import ValidationError, AppError
+from marshmallow import ValidationError as MarshmallowError
+from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
+
+class DonationService:
+    def create_donation(self, user_id, data):
+        """Create a new donation"""
+        try:
+            schema = DonationSchema()
+            validated = schema.load(data)
+        except MarshmallowError as e:
+            raise ValidationError('Invalid donation data', details=e.messages)
+        
+        phone = validated['phone']
+        if phone.startswith('0'):
+            phone = '254' + phone[1:]
+        
+        name = validated.get('name')
+        anonymous = validated.get('anonymous', False)
+        if user_id and not name:
+            user = User.query.get(user_id)
+            if user:
+                name = user.username if not anonymous else None
+        
+        donation = Donation(
+            user_id=user_id,
+            amount=validated['amount'],
+            phone=phone,
+            name=name,
+            message=validated.get('message'),
+            anonymous=anonymous,
+            frequency=validated.get('frequency', 'once'),
+            status='pending'
+        )
+        db.session.add(donation)
+        db.session.commit()
+        
+        try:
+            account_ref = f"SAFE{donation.id[:8]}"
+            response = mpesa_service.initiate_stk_push(
+                phone=phone,
+                amount=validated['amount'],
+                account_reference=account_ref,
+                transaction_desc=f"Donation to Safe Haven"
+            )
+            
+            donation.checkout_request_id = response.get('CheckoutRequestID')
+            donation.merchant_request_id = response.get('MerchantRequestID')
+            db.session.commit()
+            
+            logger.info(f'Donation initiated: {donation.id}, amount: {donation.amount}')
+            return donation
+        except Exception as e:
+            donation.status = 'failed'
+            db.session.commit()
+            logger.error(f'M-Pesa initiation failed: {str(e)}')
+            raise AppError(f'Payment initiation failed: {str(e)}')
+    
+    def process_callback(self, callback_data):
+        """Process M-Pesa callback"""
+        try:
+            body = callback_data.get('Body', {})
+            stk_callback = body.get('stkCallback', {})
+            
+            result_code = stk_callback.get('ResultCode')
+            checkout_request_id = stk_callback.get('CheckoutRequestID')
+            
+            donation = Donation.query.filter_by(checkout_request_id=checkout_request_id).first()
+            if not donation:
+                logger.warning(f'Donation not found for checkout request: {checkout_request_id}')
+                return {'error': 'Donation not found'}
+            
+            if result_code == 0:
+                donation.status = 'success'
+                
+                callback_metadata = stk_callback.get('CallbackMetadata', {})
+                items = callback_metadata.get('Item', [])
+                for item in items:
+                    if item.get('Name') == 'MpesaReceiptNumber':
+                        donation.mpesa_receipt_number = item.get('Value')
+                    elif item.get('Name') == 'TransactionDate':
+                        trans_date = str(item.get('Value'))
+                        if len(trans_date) == 14:
+                            dt = datetime.strptime(trans_date, '%Y%m%d%H%M%S')
+                            donation.updated_at = dt.replace(tzinfo=datetime.now().timezone.utc)
+            else:
+                donation.status = 'failed'
+                donation.result_code = result_code
+                donation.result_desc = stk_callback.get('ResultDesc')
+            
+            db.session.commit()
+            logger.info(f'Donation callback processed: {donation.id}, status: {donation.status}')
+            return {'success': True, 'status': donation.status}
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f'Callback processing failed: {str(e)}', exc_info=True)
+            raise AppError(f'Callback processing failed: {str(e)}')
+    
+    def get_user_donations(self, user_id):
+        """Get user's donation history"""
+        return Donation.query.filter_by(user_id=user_id).order_by(Donation.created_at.desc()).all()
+    
+    def check_transaction_status(self, checkout_request_id):
+        """Check transaction status"""
+        try:
+            donation = Donation.query.filter_by(checkout_request_id=checkout_request_id).first()
+            if not donation:
+                raise ValidationError('Donation not found')
+            
+            if donation.status == 'pending':
+                response = mpesa_service.query_status(checkout_request_id)
+                result_code = response.get('ResultCode')
+                
+                if result_code == '0':
+                    donation.status = 'success'
+                    receipt = response.get('ReceiptNumber')
+                    if receipt:
+                        donation.mpesa_receipt_number = receipt
+                    db.session.commit()
+                elif result_code == '1037':
+                    pass
+                else:
+                    donation.status = 'failed'
+                    donation.result_desc = response.get('ResultDesc')
+                    db.session.commit()
+            
+            return donation.to_dict()
+        except Exception as e:
+            logger.error(f'Check status failed: {str(e)}', exc_info=True)
+            raise AppError(f'Status check failed: {str(e)}')
+
+donation_service = DonationService()
