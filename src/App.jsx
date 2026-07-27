@@ -1,40 +1,23 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  Outlet,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
-// Pages 
-import LandingPage  from "./pages/LandingPage";
-import AuthPages    from "./pages/AuthPages";
-import Onboarding   from "./pages/Onboarding";
-import Dashboard    from "./pages/Dashboard";
-import CheckIn      from "./pages/CheckIn";
-import Milestones   from "./pages/Milestones";
-import Groups       from "./pages/Groups";
-import Journal      from "./pages/Journals";
-import Resources    from "./pages/Resources";
-import Crisis       from "./pages/Crisis";
-import Profile      from "./pages/Profile";
-import Donations    from "./pages/Donations";
-
-//Layout 
-import Layout from "./components/Layout";
-
-// API 
-import { getMe, refreshToken, setAuthToken } from "./api";
-
-
-// AUTH CONTEXT
-
+import { refreshToken, getMe, setAuthToken } from "./api/client";
+import Layout from "./shared/components/Layout";
+import AuthPages from "./features/auth/AuthPages";
+import LandingPage from "./landing/LandingPage";
+import Onboarding from "./features/onboarding/OnboardingPage";
+import Dashboard from "./features/dashboard/DashboardPage";
+import CheckIn from "./features/check-in/CheckInPage";
+import Milestones from "./features/milestones/MilestonesPage";
+import Groups from "./features/groups/GroupsPage";
+import Journal from "./features/journal/JournalPage";
+import Resources from "./features/resources/ResourcesPage";
+import Crisis from "./features/crisis/CrisisPage";
+import Profile from "./features/profile/ProfilePage";
+import Donations from "./features/donations/DonationsPage";
 
 const AuthContext = createContext(null);
-
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
@@ -42,16 +25,14 @@ export function useAuth() {
   return ctx;
 }
 
-
 function AuthProvider({ children }) {
   const [authState, setAuthState] = useState({
-    user:      null,  // { id, username, email, sobriety_start,}
-    token:     null,  // JWT access token (in memory)
-    expiresAt: null,  // ms timestamp
+    user: null,
+    token: null,
+    expiresAt: null,
   });
   const [isReady, setIsReady] = useState(false);
 
-  // Silent refresh on mount 
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -67,7 +48,7 @@ function AuthProvider({ children }) {
           });
         }
       } catch {
-        // Not authenticated — that's fine; leave authState as null.
+        // Not authenticated
       } finally {
         if (!cancelled) setIsReady(true);
       }
@@ -75,7 +56,6 @@ function AuthProvider({ children }) {
     return () => { cancelled = true; };
   }, []);
 
-  // Proactive token refresh (5 min before expiry) 
   useEffect(() => {
     if (!authState.expiresAt) return;
     const delay = authState.expiresAt - Date.now() - 5 * 60 * 1000;
@@ -87,7 +67,7 @@ function AuthProvider({ children }) {
         setAuthToken(access_token);
         setAuthState((prev) => ({
           ...prev,
-          token:     access_token,
+          token: access_token,
           expiresAt: Date.now() + expires_in * 1000,
         }));
       } catch {
@@ -99,38 +79,33 @@ function AuthProvider({ children }) {
     return () => clearTimeout(id);
   }, [authState.expiresAt]);
 
-  // Public API 
-
-  // login – called by AuthPages after a successful /api/auth/firebase response.
   const login = useCallback(({ user, access_token, expires_in }) => {
     setAuthToken(access_token);
     setAuthState({
       user,
-      token:     access_token,
+      token: access_token,
       expiresAt: Date.now() + expires_in * 1000,
     });
   }, []);
 
-  //logout – clears memory and hits the server to invalidate the refresh token. 
   const logout = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     } catch {
-      // Best-effort.
+      // Best-effort
     } finally {
       setAuthToken(null);
       setAuthState({ user: null, token: null, expiresAt: null });
     }
   }, []);
 
-  
   const updateUser = useCallback((patch) => {
     setAuthState((prev) => ({ ...prev, user: { ...prev.user, ...patch } }));
   }, []);
 
   const value = {
-    user:      authState.user,
-    token:     authState.token,
+    user: authState.user,
+    token: authState.token,
     isLoggedIn: Boolean(authState.user),
     isReady,
     login,
@@ -140,9 +115,6 @@ function AuthProvider({ children }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-
-// ROUTE GUARDS
 
 const serif = { fontFamily: "'Fraunces', serif" };
 
@@ -161,17 +133,9 @@ function ProtectedRoute() {
   const { isLoggedIn, isReady } = useAuth();
   const location = useLocation();
 
-  if (!isReady) {
-    return <LoadingScreen />;
-  }
-
-  return isLoggedIn ? (
-    <Outlet />
-  ) : (
-    <Navigate to="/login" state={{ from: location }} replace />
-  );
+  if (!isReady) return <LoadingScreen />;
+  return isLoggedIn ? <Outlet /> : <Navigate to="/login" state={{ from: location }} replace />;
 }
-
 
 function GuestRoute() {
   const { isLoggedIn, isReady } = useAuth();
@@ -179,26 +143,12 @@ function GuestRoute() {
   const from = location.state?.from?.pathname ?? "/onboarding";
 
   if (!isReady) return null;
-
   return isLoggedIn ? <Navigate to={from} replace /> : <Outlet />;
 }
 
-// Groups is the one page that needs to work both logged-out (public browsing)
-// and logged-in (inside the app shell). Routing it as two separate <Route>
-// entries — one at "/groups" and one nested at "/groups/*" under <Layout /> —
-// caused React Router to always match the plain "/groups" path first, since
-// an exact static path outranks a wildcard one regardless of nesting. That's
-// why Groups was rendering full-page for logged-in users instead of inside
-// the sidebar shell like every other page.
-// Fix: a single route that picks the right view itself, so there's no path
-// collision for React Router to resolve.
 function GroupsGate() {
   const { isLoggedIn, isReady } = useAuth();
-
-  if (!isReady) {
-    return <LoadingScreen />;
-  }
-
+  if (!isReady) return <LoadingScreen />;
   return isLoggedIn ? (
     <Layout>
       <Groups />
@@ -208,60 +158,37 @@ function GroupsGate() {
   );
 }
 
-
-// ROUTER
-
-
 function AppRoutes() {
   return (
     <Routes>
-    
       <Route path="/" element={<LandingPage />} />
-
-      {/* Support groups: browsable without login, full shell when logged in.
-          GroupsGate decides which to render, avoiding the path collision
-          that used to exist between this and the nested /groups/* route. */}
       <Route path="/groups/*" element={<GroupsGate />} />
-
-      {/* Crisis support always accessible — no login required */}
       <Route path="/crisis" element={<Crisis />} />
 
-      {/* Auth (redirect away if already logged in) */}
       <Route element={<GuestRoute />}>
-        <Route path="/login"           element={<AuthPages view="login"    />} />
-        <Route path="/register"        element={<AuthPages view="register" />} />
-        <Route path="/forgot-password" element={<AuthPages view="forgot"   />} />
-        <Route path="/reset-password"  element={<AuthPages view="reset"    />} />
+        <Route path="/login" element={<AuthPages view="login" />} />
+        <Route path="/register" element={<AuthPages view="register" />} />
+        <Route path="/forgot-password" element={<AuthPages view="forgot" />} />
+        <Route path="/reset-password" element={<AuthPages view="reset" />} />
       </Route>
 
-      {/*Protected (require auth)*/}
       <Route element={<ProtectedRoute />}>
-
-        {/* Onboarding — full-screen, no Layout chrome */}
         <Route path="/onboarding" element={<Onboarding />} />
-
-        {/* All other protected pages use the shared Layout */}
         <Route element={<Layout />}>
-          <Route path="/dashboard"  element={<Dashboard  />} />
-          <Route path="/check-in"   element={<CheckIn    />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/check-in" element={<CheckIn />} />
           <Route path="/milestones" element={<Milestones />} />
-          <Route path="/journal"    element={<Journal    />} />
-          <Route path="/resources"  element={<Resources  />} />
-          <Route path="/donations"  element={<Donations  />} />
-          <Route path="/profile"    element={<Profile    />} />
+          <Route path="/journal" element={<Journal />} />
+          <Route path="/resources" element={<Resources />} />
+          <Route path="/donations" element={<Donations />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
-
       </Route>
 
-      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
-
-
-// ROOT
-
 
 export default function App() {
   return (
