@@ -1,4 +1,4 @@
-from app.groups.models import Group, GroupMembership, GroupMessage
+from groups.models import Group, GroupMembership, GroupMessage
 from app.extensions import db
 from app.core.exceptions import ValidationError, NotFoundError, ForbiddenError
 

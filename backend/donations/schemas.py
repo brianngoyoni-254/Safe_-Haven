@@ -14,5 +14,5 @@ class DonationSchema(Schema):
     phone = fields.Str(required=True, validate=validate_phone)
     name = fields.Str(allow_none=True, validate=validate.Length(max=120))
     message = fields.Str(allow_none=True)
-    anonymous = fields.Bool(missing=False)
-    frequency = fields.Str(missing='once', validate=validate.OneOf(['once', 'monthly']))
+    anonymous = fields.Bool(load_default=False)
+    frequency = fields.Str(load_default='once', validate=validate.OneOf(['once', 'monthly']))

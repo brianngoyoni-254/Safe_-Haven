@@ -8,15 +8,22 @@ logger = logging.getLogger(__name__)
 
 class MpesaService:
     def __init__(self):
+        self._configured = False
+
+    def _ensure_configured(self):
+        if self._configured:
+            return
         self.consumer_key = current_app.config.get('MPESA_CONSUMER_KEY')
         self.consumer_secret = current_app.config.get('MPESA_CONSUMER_SECRET')
         self.passkey = current_app.config.get('MPESA_PASSKEY')
         self.shortcode = current_app.config.get('MPESA_SHORTCODE')
         self.environment = current_app.config.get('MPESA_ENVIRONMENT', 'sandbox')
         self.base_url = 'https://sandbox.safaricom.co.ke' if self.environment == 'sandbox' else 'https://api.safaricom.co.ke'
-    
+        self._configured = True
+
     def get_access_token(self):
         """Get M-Pesa access token"""
+        self._ensure_configured()
         auth = base64.b64encode(
             f"{self.consumer_key}:{self.consumer_secret}".encode()
         ).decode()
@@ -35,6 +42,7 @@ class MpesaService:
     
     def initiate_stk_push(self, phone, amount, account_reference, transaction_desc=None):
         """Initiate STK push payment"""
+        self._ensure_configured()
         try:
             token = self.get_access_token()
             timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -72,6 +80,7 @@ class MpesaService:
     
     def query_status(self, checkout_request_id):
         """Query transaction status"""
+        self._ensure_configured()
         try:
             token = self.get_access_token()
             timestamp = datetime.now().strftime('%Y%m%d%H%M%S')

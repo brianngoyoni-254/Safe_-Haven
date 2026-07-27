@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.core.decorators import login_required
-from app.groups.services import group_service
+from groups.services import group_service
 from app.core.exceptions import AppError
 import logging
 
@@ -105,7 +105,7 @@ def leave_group(current_user, group_id):
             'success': True,
             'message': 'Left group successfully'
         }), 200
-    except AppError as e):
+    except AppError as e:
         return jsonify({
             'success': False,
             'error': e.__class__.__name__,

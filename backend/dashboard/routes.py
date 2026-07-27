@@ -1,9 +1,9 @@
 from flask import Blueprint, jsonify
 from app.core.decorators import login_required
 from app.checkins.models import CheckIn
-from app.journal.models import JournalEntry
+from journal.models import JournalEntry
 from app.milestones.models import Milestone
-from app.groups.models import GroupMembership
+from groups.models import GroupMembership
 from datetime import date, timedelta
 from sqlalchemy import func
 import logging

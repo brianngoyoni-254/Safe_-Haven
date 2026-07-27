@@ -1,6 +1,6 @@
-from app.donations.models import Donation
-from app.donations.mpesa import mpesa_service
-from app.donations.schemas import DonationSchema
+from donations.models import Donation
+from donations.mpesa import mpesa_service
+from donations.schemas import DonationSchema
 from app.users.models import User
 from app.extensions import db
 from app.core.exceptions import ValidationError, AppError

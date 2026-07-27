@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from app.crisis.models import CrisisEmergencyLine, CrisisCategory
+from crisis.models import CrisisEmergencyLine, CrisisCategory
 from app.core.decorators import login_required
 import logging
 

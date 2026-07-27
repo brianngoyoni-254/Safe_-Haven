@@ -1,4 +1,4 @@
-from app.journal.models import JournalEntry
+from journal.models import JournalEntry
 from app.extensions import db
 from app.core.exceptions import ValidationError, NotFoundError
 

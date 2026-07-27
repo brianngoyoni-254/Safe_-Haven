@@ -28,13 +28,13 @@ def create_app(config_class=Config):
     # Register blueprints
     from app.auth.routes import auth_bp
     from app.users.routes import users_bp
-    from app.donations.routes import donations_bp
-    from app.journal.routes import journal_bp
-    from app.crisis.routes import crisis_bp
+    from donations.routes import donations_bp
+    from journal.routes import journal_bp
+    from crisis.routes import crisis_bp
     from app.checkins.routes import checkins_bp
-    from app.groups.routes import groups_bp
+    from groups.routes import groups_bp
     from app.milestones.routes import milestones_bp
-    from app.dashboard.routes import dashboard_bp
+    from dashboard.routes import dashboard_bp
     from app.library.routes import library_bp
     from app.resources.routes import resources_bp
     from app.videos.routes import videos_bp

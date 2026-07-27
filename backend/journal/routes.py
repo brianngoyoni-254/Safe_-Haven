@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.core.decorators import login_required
-from app.journal.services import journal_service
+from journal.services import journal_service
 from app.core.exceptions import AppError
 import logging
 
