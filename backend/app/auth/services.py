@@ -28,7 +28,13 @@ class AuthService:
             username=validated['username'],
             sobriety_start=validated.get('sobriety_start')
         )
-        user.set_password(validated['password'])
+        try:
+            user.set_password(validated['password'])
+        except (ValueError, UnicodeEncodeError) as e:
+            # Defensive: schema validation should already catch bad passwords,
+            # but never let a hashing failure surface as a raw 500.
+            logger.error("password_hash_failed", error=str(e))
+            raise ValidationError('Could not process password', details={'password': [str(e)]})
 
         db.session.add(user)
         db.session.commit()
@@ -66,7 +72,16 @@ class AuthService:
 
         init_firebase_admin()
         try:
-            decoded = firebase_auth.verify_id_token(id_token)
+            # check_revoked=True makes this actually check Firebase's session
+            # state (e.g. a token issued before the user was disabled or
+            # force-signed-out elsewhere), not just signature/expiry.
+            decoded = firebase_auth.verify_id_token(id_token, check_revoked=True)
+        except firebase_auth.RevokedIdTokenError:
+            logger.warning("firebase_token_revoked")
+            raise UnauthorizedError('Session has been revoked, please sign in again')
+        except firebase_auth.UserDisabledError:
+            logger.warning("firebase_user_disabled")
+            raise UnauthorizedError('This account has been disabled')
         except Exception as e:
             logger.warning("firebase_token_invalid", error=str(e))
             raise UnauthorizedError('Invalid or expired Firebase token')

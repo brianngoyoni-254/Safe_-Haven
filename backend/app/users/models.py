@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
-from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
+from werkzeug.security import check_password_hash
 from app.extensions import db
 
 def _uuid_str():
@@ -31,12 +32,31 @@ class User(db.Model):
 
     def set_password(self, password):
         if password:
-            self.password_hash = generate_password_hash(password)
+            hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            self.password_hash = hashed.decode('utf-8')
 
     def check_password(self, password):
         if not self.password_hash:
             return False
-        return check_password_hash(self.password_hash, password)
+
+        # Existing accounts were hashed with werkzeug (pbkdf2:.../scrypt:...).
+        # Verify against that scheme once, then silently re-hash with bcrypt
+        # so every account is on bcrypt after its next successful login.
+        if self.password_hash.startswith(('pbkdf2:', 'scrypt:')):
+            if check_password_hash(self.password_hash, password):
+                self.set_password(password)
+                db.session.commit()
+                return True
+            return False
+
+        try:
+            return bcrypt.checkpw(
+                password.encode('utf-8'),
+                self.password_hash.encode('utf-8'),
+            )
+        except ValueError:
+            # Malformed/unrecognized hash format
+            return False
 
     def to_dict(self):
         return {
