@@ -1,20 +1,20 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8000",
+  baseURL: import.meta.env.VITE_API_URL ?? "/api",
   withCredentials: true,
 });
 
 export async function refreshToken() {
-  const { data } = await api.post("/api/auth/refresh");
-  return data;
+  const { data } = await api.post("/auth/refresh");
+  return data.data;
 }
 
 export async function getMe(token) {
-  const { data } = await api.get("/api/users/me", {
+  const { data } = await api.get("/users/me", {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return data;
+  return data.data;
 }
 
 let _token = null;

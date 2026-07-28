@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 
 from app.config.env import Config
 from app.extensions import db, jwt, cors, migrate
+from app.core.firebase_admin_setup import init_firebase_admin
 from app.middleware.error_handler import register_error_handlers
 from app.middleware.logging import setup_logging
 
@@ -16,8 +17,13 @@ def create_app(config_class=Config):
     # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)
-    cors.init_app(app)
+    cors.init_app(
+        app,
+        resources={r"/api/*": {"origins": app.config['CORS_ORIGINS']}},
+        supports_credentials=True,
+    )
     migrate.init_app(app, db)
+    init_firebase_admin()
     
     # Setup logging
     setup_logging(app)

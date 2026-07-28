@@ -34,8 +34,9 @@ def setup_logging(app):
     @app.before_request
     def log_request_info():
         app.logger.info(f'Request: {request.method} {request.path}')
-        if request.json:
-            log_data = {k: v for k, v in request.json.items() if k not in ['password']}
+        body = request.get_json(silent=True)
+        if body:
+            log_data = {k: v for k, v in body.items() if k not in ['password']}
             app.logger.debug(f'Body: {json.dumps(log_data)}')
     
     @app.after_request

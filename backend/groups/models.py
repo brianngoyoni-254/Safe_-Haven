@@ -75,7 +75,7 @@ class GroupMembership(db.Model):
         default=lambda: datetime.now(timezone.utc),
     )
 
-    user = db.relationship("User")
+    user = db.relationship("User", back_populates="memberships")
 
     __table_args__ = (
         db.UniqueConstraint("group_id", "user_id", name="uq_group_memberships_group_user"),
@@ -107,7 +107,7 @@ class GroupMessage(db.Model):
     )
     edited_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
-    author = db.relationship("User", foreign_keys=[author_id])
+    author = db.relationship("User", foreign_keys=[author_id], back_populates="messages")
 
     def to_dict(self):
         return {

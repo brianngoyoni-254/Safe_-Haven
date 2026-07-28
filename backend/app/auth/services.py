@@ -54,4 +54,45 @@ class AuthService:
         logger.info(f'User logged in: {user.email}')
         return tokens
 
+    def login_with_firebase(self, id_token):
+        """Verify a Firebase ID token, find-or-create the matching user,
+        and issue our own JWT pair."""
+        from firebase_admin import auth as firebase_auth
+        from app.core.firebase_admin_setup import init_firebase_admin
+
+        if not id_token:
+            raise UnauthorizedError('Missing Firebase token')
+
+        init_firebase_admin()
+        try:
+            decoded = firebase_auth.verify_id_token(id_token)
+        except Exception:
+            raise UnauthorizedError('Invalid or expired Firebase token')
+
+        firebase_uid = decoded['uid']
+        email = decoded.get('email')
+        name = decoded.get('name') or (email.split('@')[0] if email else 'user')
+
+        user = User.query.filter_by(firebase_uid=firebase_uid).first()
+        if not user and email:
+            user = User.query.filter_by(email=email).first()
+            if user:
+                user.firebase_uid = firebase_uid
+
+        if not user:
+            user = User(
+                email=email,
+                username=name,
+                firebase_uid=firebase_uid,
+            )
+            db.session.add(user)
+
+        db.session.commit()
+
+        tokens = generate_tokens(user.id)
+        tokens['user'] = user.to_dict()
+
+        logger.info(f'User logged in via Firebase: {user.email}')
+        return tokens
+
 auth_service = AuthService()

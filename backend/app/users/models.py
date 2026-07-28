@@ -26,8 +26,8 @@ class User(db.Model):
     checkins = db.relationship('CheckIn', backref='user', lazy=True, cascade='all, delete-orphan')
     journal_entries = db.relationship('JournalEntry', backref='user', lazy=True, cascade='all, delete-orphan')
     donations = db.relationship('Donation', backref='user', lazy=True)
-    memberships = db.relationship('GroupMembership', backref='user', lazy=True, cascade='all, delete-orphan')
-    messages = db.relationship('GroupMessage', backref='author', lazy=True)
+    memberships = db.relationship('GroupMembership', back_populates='user', lazy=True, cascade='all, delete-orphan')
+    messages = db.relationship('GroupMessage', back_populates='author', lazy=True)
 
     def set_password(self, password):
         if password:

@@ -62,7 +62,7 @@ async function exchangeFirebaseToken(firebaseToken, username = null) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? "Authentication failed");
-  return data;
+  return data.data;
 }
 
 function Input({ icon: IconComp, type = "text", placeholder, value, onChange, rightElement }) {
