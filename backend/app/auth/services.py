@@ -4,9 +4,9 @@ from app.extensions import db
 from app.core.tokens import generate_tokens
 from app.core.exceptions import ValidationError, UnauthorizedError, ConflictError
 from marshmallow import ValidationError as MarshmallowError
-import logging
+import structlog
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class AuthService:
     def register_user(self, data):
@@ -16,26 +16,26 @@ class AuthService:
             validated = schema.load(data)
         except MarshmallowError as e:
             raise ValidationError('Invalid registration data', details=e.messages)
-        
+
         if User.query.filter_by(email=validated['email']).first():
             raise ConflictError('Email already registered')
-        
+
         if User.query.filter_by(username=validated['username']).first():
             raise ConflictError('Username already taken')
-        
+
         user = User(
             email=validated['email'],
             username=validated['username'],
             sobriety_start=validated.get('sobriety_start')
         )
         user.set_password(validated['password'])
-        
+
         db.session.add(user)
         db.session.commit()
-        
-        logger.info(f'User registered: {user.email}')
+
+        logger.info("user_registered", user_id=user.id, email=user.email)
         return user
-    
+
     def login_user(self, data):
         """Authenticate user and generate tokens"""
         try:
@@ -43,15 +43,16 @@ class AuthService:
             validated = schema.load(data)
         except MarshmallowError as e:
             raise ValidationError('Invalid login data', details=e.messages)
-        
+
         user = User.query.filter_by(email=validated['email']).first()
         if not user or not user.check_password(validated['password']):
+            logger.warning("login_failed", email=validated['email'])
             raise UnauthorizedError('Invalid email or password')
-        
+
         tokens = generate_tokens(user.id)
         tokens['user'] = user.to_dict()
-        
-        logger.info(f'User logged in: {user.email}')
+
+        logger.info("user_logged_in", user_id=user.id, email=user.email)
         return tokens
 
     def login_with_firebase(self, id_token):
@@ -66,7 +67,8 @@ class AuthService:
         init_firebase_admin()
         try:
             decoded = firebase_auth.verify_id_token(id_token)
-        except Exception:
+        except Exception as e:
+            logger.warning("firebase_token_invalid", error=str(e))
             raise UnauthorizedError('Invalid or expired Firebase token')
 
         firebase_uid = decoded['uid']
@@ -79,6 +81,7 @@ class AuthService:
             if user:
                 user.firebase_uid = firebase_uid
 
+        is_new_user = user is None
         if not user:
             user = User(
                 email=email,
@@ -92,7 +95,12 @@ class AuthService:
         tokens = generate_tokens(user.id)
         tokens['user'] = user.to_dict()
 
-        logger.info(f'User logged in via Firebase: {user.email}')
+        logger.info(
+            "user_logged_in_via_firebase",
+            user_id=user.id,
+            email=user.email,
+            is_new_user=is_new_user,
+        )
         return tokens
 
 auth_service = AuthService()

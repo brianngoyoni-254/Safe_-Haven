@@ -1,61 +1,58 @@
-from flask import jsonify
-from app.extensions import db
-from app.core.exceptions import AppError, ValidationError, NotFoundError, UnauthorizedError
-import logging
+import structlog
+from flask import request, jsonify
+from app.core.exceptions import AppError
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
+
 
 def register_error_handlers(app):
-    """Register custom error handlers"""
-    
-    @app.errorhandler(404)
-    def not_found(error):
-        return jsonify({
-            'success': False,
-            'error': 'NotFoundError',
-            'message': 'Resource not found'
-        }), 404
-    
-    @app.errorhandler(400)
-    def bad_request(error):
-        return jsonify({
-            'success': False,
-            'error': 'BadRequestError',
-            'message': str(error)
-        }), 400
-    
-    @app.errorhandler(401)
-    def unauthorized(error):
-        return jsonify({
-            'success': False,
-            'error': 'UnauthorizedError',
-            'message': 'Authentication required'
-        }), 401
-    
-    @app.errorhandler(403)
-    def forbidden(error):
-        return jsonify({
-            'success': False,
-            'error': 'ForbiddenError',
-            'message': 'Insufficient permissions'
-        }), 403
-    
-    @app.errorhandler(500)
-    def internal_error(error):
-        db.session.rollback()
-        logger.error(f'Internal server error: {str(error)}', exc_info=True)
-        return jsonify({
-            'success': False,
-            'error': 'InternalServerError',
-            'message': 'An unexpected error occurred'
-        }), 500
-    
+    """Attach global JSON error handlers to the Flask app."""
+
     @app.errorhandler(AppError)
     def handle_app_error(error):
-        logger.warning(f'Application error: {str(error)}')
+        logger.warning(
+            'app_error',
+            error_type=error.__class__.__name__,
+            message=str(error),
+            status_code=error.status_code,
+            path=request.path,
+        )
         return jsonify({
             'success': False,
             'error': error.__class__.__name__,
             'message': str(error),
-            'details': getattr(error, 'details', {})
+            'details': getattr(error, 'details', {}),
         }), error.status_code
+
+    @app.errorhandler(404)
+    def handle_not_found(error):
+        logger.info('not_found', path=request.path, method=request.method)
+        return jsonify({
+            'success': False,
+            'error': 'NotFound',
+            'message': 'The requested resource was not found',
+        }), 404
+
+    @app.errorhandler(405)
+    def handle_method_not_allowed(error):
+        logger.info('method_not_allowed', path=request.path, method=request.method)
+        return jsonify({
+            'success': False,
+            'error': 'MethodNotAllowed',
+            'message': 'This method is not allowed for the requested URL',
+        }), 405
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(error):
+        logger.error(
+            'unhandled_exception',
+            error=str(error),
+            error_type=error.__class__.__name__,
+            path=request.path,
+            exc_info=True,
+        )
+        return jsonify({
+            'success': False,
+            'error': 'InternalServerError',
+            'message': 'An unexpected error occurred',
+        }), 500

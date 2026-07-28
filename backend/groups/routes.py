@@ -2,10 +2,10 @@ from flask import Blueprint, request, jsonify
 from app.core.decorators import login_required
 from groups.services import group_service
 from app.core.exceptions import AppError
-import logging
+import structlog
 
 groups_bp = Blueprint('groups', __name__)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 @groups_bp.route('/', methods=['POST'])
 @login_required
@@ -25,7 +25,7 @@ def create_group(current_user):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Create group error: {str(e)}', exc_info=True)
+        logger.error("create_group_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -42,7 +42,7 @@ def get_groups(current_user):
             'data': groups
         }), 200
     except Exception as e:
-        logger.error(f'Get groups error: {str(e)}', exc_info=True)
+        logger.error("get_groups_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -65,7 +65,7 @@ def get_group(current_user, group_id):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Get group error: {str(e)}', exc_info=True)
+        logger.error("get_group_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -89,7 +89,7 @@ def join_group(current_user, group_id):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Join group error: {str(e)}', exc_info=True)
+        logger.error("join_group_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -112,7 +112,7 @@ def leave_group(current_user, group_id):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Leave group error: {str(e)}', exc_info=True)
+        logger.error("leave_group_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -137,7 +137,7 @@ def send_message(current_user, group_id):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Send message error: {str(e)}', exc_info=True)
+        logger.error("send_message_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -161,7 +161,7 @@ def get_messages(current_user, group_id):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Get messages error: {str(e)}', exc_info=True)
+        logger.error("get_messages_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',

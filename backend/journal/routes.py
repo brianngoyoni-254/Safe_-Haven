@@ -2,10 +2,10 @@ from flask import Blueprint, request, jsonify
 from app.core.decorators import login_required
 from journal.services import journal_service
 from app.core.exceptions import AppError
-import logging
+import structlog
 
 journal_bp = Blueprint('journal', __name__)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 @journal_bp.route('/', methods=['POST'])
 @login_required
@@ -25,7 +25,7 @@ def create_entry(current_user):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Create journal error: {str(e)}', exc_info=True)
+        logger.error("create_journal_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -42,7 +42,7 @@ def get_entries(current_user):
             'data': [e.to_dict() for e in entries]
         }), 200
     except Exception as e:
-        logger.error(f'Get journal error: {str(e)}', exc_info=True)
+        logger.error("get_journal_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -65,7 +65,7 @@ def get_entry(current_user, entry_id):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Get journal entry error: {str(e)}', exc_info=True)
+        logger.error("get_journal_entry_error", user_id=current_user.id, entry_id=entry_id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -90,7 +90,7 @@ def update_entry(current_user, entry_id):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Update journal error: {str(e)}', exc_info=True)
+        logger.error("update_journal_error", user_id=current_user.id, entry_id=entry_id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -113,7 +113,7 @@ def delete_entry(current_user, entry_id):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Delete journal error: {str(e)}', exc_info=True)
+        logger.error("delete_journal_error", user_id=current_user.id, entry_id=entry_id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',

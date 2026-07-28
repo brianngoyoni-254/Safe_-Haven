@@ -2,9 +2,9 @@ from functools import wraps
 from flask import request, jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from app.extensions import db
-import logging
+import structlog
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 def login_required(fn):
     """Decorator to require JWT authentication"""
@@ -16,11 +16,12 @@ def login_required(fn):
             from app.users.models import User
             user = User.query.get(user_id)
             if not user:
+                logger.warning("auth_user_not_found", user_id=user_id)
                 return jsonify({'error': 'User not found'}), 401
             kwargs['current_user'] = user
             return fn(*args, **kwargs)
         except Exception as e:
-            logger.warning(f'Authentication failed: {str(e)}')
+            logger.warning("authentication_failed", error=str(e))
             return jsonify({'error': 'Authentication required'}), 401
     return wrapper
 
@@ -39,9 +40,9 @@ def rate_limit(limit=100, per=60):
     """Simple rate limiting decorator (in-memory)"""
     from collections import defaultdict
     import time
-    
+
     requests = defaultdict(list)
-    
+
     def decorator(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
@@ -49,10 +50,11 @@ def rate_limit(limit=100, per=60):
             now = time.time()
             window_start = now - per
             requests[ip] = [t for t in requests[ip] if t > window_start]
-            
+
             if len(requests[ip]) >= limit:
+                logger.warning("rate_limit_exceeded", ip=ip)
                 return jsonify({'error': 'Rate limit exceeded'}), 429
-            
+
             requests[ip].append(now)
             return fn(*args, **kwargs)
         return wrapper

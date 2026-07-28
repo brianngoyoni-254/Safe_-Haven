@@ -2,10 +2,10 @@ from flask import Blueprint, request, jsonify
 from app.core.decorators import login_required
 from app.checkins.services import checkin_service
 from app.core.exceptions import AppError
-import logging
+import structlog
 
 checkins_bp = Blueprint('checkins', __name__)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 @checkins_bp.route('/', methods=['POST'])
 @login_required
@@ -25,7 +25,7 @@ def create_checkin(current_user):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Checkin error: {str(e)}', exc_info=True)
+        logger.error("checkin_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -42,7 +42,7 @@ def get_today_checkin(current_user):
             'data': checkin.to_dict() if checkin else None
         }), 200
     except Exception as e:
-        logger.error(f'Get today checkin error: {str(e)}', exc_info=True)
+        logger.error("get_today_checkin_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -59,7 +59,7 @@ def get_checkins(current_user):
             'data': [c.to_dict() for c in checkins]
         }), 200
     except Exception as e:
-        logger.error(f'Get checkins error: {str(e)}', exc_info=True)
+        logger.error("get_checkins_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -76,7 +76,7 @@ def get_stats(current_user):
             'data': stats
         }), 200
     except Exception as e:
-        logger.error(f'Get stats error: {str(e)}', exc_info=True)
+        logger.error("get_stats_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',

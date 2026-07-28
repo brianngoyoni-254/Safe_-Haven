@@ -1,45 +1,169 @@
-import logging
-from logging.handlers import RotatingFileHandler
-import os
-from flask import request
-import json
+from flask import Blueprint, request, jsonify
+from app.core.decorators import login_required
+from groups.services import group_service
+from app.core.exceptions import AppError
+import structlog
 
-def setup_logging(app):
-    """Configure logging for the application"""
-    
-    log_dir = 'logs'
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-    
-    file_handler = RotatingFileHandler(
-        os.path.join(log_dir, 'app.log'),
-        maxBytes=10485760,
-        backupCount=10
-    )
-    file_handler.setLevel(logging.DEBUG)
-    
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-    
-    app.logger.addHandler(file_handler)
-    app.logger.addHandler(console_handler)
-    app.logger.setLevel(logging.DEBUG)
-    
-    @app.before_request
-    def log_request_info():
-        app.logger.info(f'Request: {request.method} {request.path}')
-        body = request.get_json(silent=True)
-        if body:
-            log_data = {k: v for k, v in body.items() if k not in ['password']}
-            app.logger.debug(f'Body: {json.dumps(log_data)}')
-    
-    @app.after_request
-    def log_response_info(response):
-        app.logger.info(f'Response: {response.status_code} {request.path}')
-        return response
+groups_bp = Blueprint('groups', __name__)
+logger = structlog.get_logger(__name__)
+
+@groups_bp.route('/', methods=['POST'])
+@login_required
+def create_group(current_user):
+    try:
+        data = request.get_json()
+        group = group_service.create_group(current_user.id, data)
+        return jsonify({
+            'success': True,
+            'message': 'Group created successfully',
+            'data': group.to_dict()
+        }), 201
+    except AppError as e:
+        return jsonify({
+            'success': False,
+            'error': e.__class__.__name__,
+            'message': str(e)
+        }), e.status_code
+    except Exception as e:
+        logger.error("create_group_error", user_id=current_user.id, error=str(e), exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'InternalServerError',
+            'message': 'An unexpected error occurred'
+        }), 500
+
+@groups_bp.route('/', methods=['GET'])
+@login_required
+def get_groups(current_user):
+    try:
+        groups = group_service.get_all_groups(current_user.id)
+        return jsonify({
+            'success': True,
+            'data': groups
+        }), 200
+    except Exception as e:
+        logger.error("get_groups_error", user_id=current_user.id, error=str(e), exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'InternalServerError',
+            'message': 'An unexpected error occurred'
+        }), 500
+
+@groups_bp.route('/<group_id>', methods=['GET'])
+@login_required
+def get_group(current_user, group_id):
+    try:
+        group = group_service.get_group(group_id, current_user.id)
+        return jsonify({
+            'success': True,
+            'data': group
+        }), 200
+    except AppError as e:
+        return jsonify({
+            'success': False,
+            'error': e.__class__.__name__,
+            'message': str(e)
+        }), e.status_code
+    except Exception as e:
+        logger.error("get_group_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'InternalServerError',
+            'message': 'An unexpected error occurred'
+        }), 500
+
+@groups_bp.route('/<group_id>/join', methods=['POST'])
+@login_required
+def join_group(current_user, group_id):
+    try:
+        group = group_service.join_group(group_id, current_user.id)
+        return jsonify({
+            'success': True,
+            'message': 'Joined group successfully',
+            'data': group.to_dict()
+        }), 200
+    except AppError as e:
+        return jsonify({
+            'success': False,
+            'error': e.__class__.__name__,
+            'message': str(e)
+        }), e.status_code
+    except Exception as e:
+        logger.error("join_group_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'InternalServerError',
+            'message': 'An unexpected error occurred'
+        }), 500
+
+@groups_bp.route('/<group_id>/leave', methods=['POST'])
+@login_required
+def leave_group(current_user, group_id):
+    try:
+        group_service.leave_group(group_id, current_user.id)
+        return jsonify({
+            'success': True,
+            'message': 'Left group successfully'
+        }), 200
+    except AppError as e:
+        return jsonify({
+            'success': False,
+            'error': e.__class__.__name__,
+            'message': str(e)
+        }), e.status_code
+    except Exception as e:
+        logger.error("leave_group_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'InternalServerError',
+            'message': 'An unexpected error occurred'
+        }), 500
+
+@groups_bp.route('/<group_id>/messages', methods=['POST'])
+@login_required
+def send_message(current_user, group_id):
+    try:
+        data = request.get_json()
+        message = group_service.send_message(group_id, current_user.id, data)
+        return jsonify({
+            'success': True,
+            'message': 'Message sent',
+            'data': message.to_dict()
+        }), 201
+    except AppError as e:
+        return jsonify({
+            'success': False,
+            'error': e.__class__.__name__,
+            'message': str(e)
+        }), e.status_code
+    except Exception as e:
+        logger.error("send_message_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'InternalServerError',
+            'message': 'An unexpected error occurred'
+        }), 500
+
+@groups_bp.route('/<group_id>/messages', methods=['GET'])
+@login_required
+def get_messages(current_user, group_id):
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        messages = group_service.get_messages(group_id, current_user.id, limit)
+        return jsonify({
+            'success': True,
+            'data': [m.to_dict() for m in messages]
+        }), 200
+    except AppError as e:
+        return jsonify({
+            'success': False,
+            'error': e.__class__.__name__,
+            'message': str(e)
+        }), e.status_code
+    except Exception as e:
+        logger.error("get_messages_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'InternalServerError',
+            'message': 'An unexpected error occurred'
+        }), 500

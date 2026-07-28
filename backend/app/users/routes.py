@@ -2,10 +2,10 @@ from flask import Blueprint, request, jsonify
 from app.core.decorators import login_required
 from app.users.services import user_service
 from app.core.exceptions import AppError
-import logging
+import structlog
 
 users_bp = Blueprint('users', __name__)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 @users_bp.route('/me', methods=['GET'])
 @login_required
@@ -17,7 +17,7 @@ def get_profile(current_user):
             'data': current_user.to_dict()
         }), 200
     except Exception as e:
-        logger.error(f'Get profile error: {str(e)}', exc_info=True)
+        logger.error("get_profile_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -43,7 +43,7 @@ def update_profile(current_user):
             'message': str(e)
         }), e.status_code
     except Exception as e:
-        logger.error(f'Update profile error: {str(e)}', exc_info=True)
+        logger.error("update_profile_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',

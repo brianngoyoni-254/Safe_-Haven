@@ -2,25 +2,25 @@ from flask import Blueprint, request, jsonify
 from app.core.decorators import login_required
 from donations.services import donation_service
 from app.core.exceptions import AppError
-import logging
+import structlog
 
 donations_bp = Blueprint('donations', __name__)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 @donations_bp.route('/', methods=['POST'])
 def create_donation():
     """Create a donation (authenticated or anonymous)"""
     try:
         data = request.get_json()
-        
+
         from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
         user_id = None
         try:
             verify_jwt_in_request()
             user_id = get_jwt_identity()
-        except:
+        except Exception:
             pass
-        
+
         donation = donation_service.create_donation(user_id, data)
         return jsonify({
             'success': True,
@@ -35,7 +35,7 @@ def create_donation():
             'details': getattr(e, 'details', {})
         }), e.status_code
     except Exception as e:
-        logger.error(f'Donation creation error: {str(e)}', exc_info=True)
+        logger.error("donation_creation_error", error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -52,7 +52,7 @@ def get_donations(current_user):
             'data': [d.to_dict() for d in donations]
         }), 200
     except Exception as e:
-        logger.error(f'Get donations error: {str(e)}', exc_info=True)
+        logger.error("get_donations_error", user_id=current_user.id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
@@ -67,7 +67,7 @@ def mpesa_callback():
         result = donation_service.process_callback(data)
         return jsonify(result), 200
     except Exception as e:
-        logger.error(f'M-Pesa callback error: {str(e)}', exc_info=True)
+        logger.error("mpesa_callback_error", error=str(e), exc_info=True)
         return jsonify({'ResultCode': 1, 'ResultDesc': str(e)}), 400
 
 @donations_bp.route('/status/<checkout_request_id>', methods=['GET'])
@@ -79,7 +79,7 @@ def check_status(checkout_request_id):
             'data': status
         }), 200
     except Exception as e:
-        logger.error(f'Check status error: {str(e)}', exc_info=True)
+        logger.error("check_status_error", checkout_request_id=checkout_request_id, error=str(e), exc_info=True)
         return jsonify({
             'success': False,
             'error': 'InternalServerError',
