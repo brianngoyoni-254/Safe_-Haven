@@ -1,169 +1,115 @@
-from flask import Blueprint, request, jsonify
-from app.core.decorators import login_required
-from groups.services import group_service
-from app.core.exceptions import AppError
+import logging
+import sys
+import time
+import uuid
+
 import structlog
+from flask import request, g
 
-groups_bp = Blueprint('groups', __name__)
-logger = structlog.get_logger(__name__)
+SENSITIVE_KEYS = {
+    'password', 'confirm_password', 'old_password', 'new_password',
+    'token', 'refresh_token', 'access_token',
+}
 
-@groups_bp.route('/', methods=['POST'])
-@login_required
-def create_group(current_user):
-    try:
-        data = request.get_json()
-        group = group_service.create_group(current_user.id, data)
-        return jsonify({
-            'success': True,
-            'message': 'Group created successfully',
-            'data': group.to_dict()
-        }), 201
-    except AppError as e:
-        return jsonify({
-            'success': False,
-            'error': e.__class__.__name__,
-            'message': str(e)
-        }), e.status_code
-    except Exception as e:
-        logger.error("create_group_error", user_id=current_user.id, error=str(e), exc_info=True)
-        return jsonify({
-            'success': False,
-            'error': 'InternalServerError',
-            'message': 'An unexpected error occurred'
-        }), 500
 
-@groups_bp.route('/', methods=['GET'])
-@login_required
-def get_groups(current_user):
-    try:
-        groups = group_service.get_all_groups(current_user.id)
-        return jsonify({
-            'success': True,
-            'data': groups
-        }), 200
-    except Exception as e:
-        logger.error("get_groups_error", user_id=current_user.id, error=str(e), exc_info=True)
-        return jsonify({
-            'success': False,
-            'error': 'InternalServerError',
-            'message': 'An unexpected error occurred'
-        }), 500
+def _redact(data):
+    """Recursively redact sensitive keys from a dict before logging."""
+    if not isinstance(data, dict):
+        return data
+    redacted = {}
+    for key, value in data.items():
+        if key.lower() in SENSITIVE_KEYS:
+            redacted[key] = '***REDACTED***'
+        elif isinstance(value, dict):
+            redacted[key] = _redact(value)
+        else:
+            redacted[key] = value
+    return redacted
 
-@groups_bp.route('/<group_id>', methods=['GET'])
-@login_required
-def get_group(current_user, group_id):
-    try:
-        group = group_service.get_group(group_id, current_user.id)
-        return jsonify({
-            'success': True,
-            'data': group
-        }), 200
-    except AppError as e:
-        return jsonify({
-            'success': False,
-            'error': e.__class__.__name__,
-            'message': str(e)
-        }), e.status_code
-    except Exception as e:
-        logger.error("get_group_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
-        return jsonify({
-            'success': False,
-            'error': 'InternalServerError',
-            'message': 'An unexpected error occurred'
-        }), 500
 
-@groups_bp.route('/<group_id>/join', methods=['POST'])
-@login_required
-def join_group(current_user, group_id):
-    try:
-        group = group_service.join_group(group_id, current_user.id)
-        return jsonify({
-            'success': True,
-            'message': 'Joined group successfully',
-            'data': group.to_dict()
-        }), 200
-    except AppError as e:
-        return jsonify({
-            'success': False,
-            'error': e.__class__.__name__,
-            'message': str(e)
-        }), e.status_code
-    except Exception as e:
-        logger.error("join_group_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
-        return jsonify({
-            'success': False,
-            'error': 'InternalServerError',
-            'message': 'An unexpected error occurred'
-        }), 500
+def configure_structlog(app):
+    """Configure structlog + stdlib logging for the Flask app.
 
-@groups_bp.route('/<group_id>/leave', methods=['POST'])
-@login_required
-def leave_group(current_user, group_id):
-    try:
-        group_service.leave_group(group_id, current_user.id)
-        return jsonify({
-            'success': True,
-            'message': 'Left group successfully'
-        }), 200
-    except AppError as e:
-        return jsonify({
-            'success': False,
-            'error': e.__class__.__name__,
-            'message': str(e)
-        }), e.status_code
-    except Exception as e:
-        logger.error("leave_group_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
-        return jsonify({
-            'success': False,
-            'error': 'InternalServerError',
-            'message': 'An unexpected error occurred'
-        }), 500
+    Console output is human-readable/colorized; logs/app.log gets
+    one JSON object per line.
+    """
+    log_level = app.config.get('LOG_LEVEL', 'INFO')
 
-@groups_bp.route('/<group_id>/messages', methods=['POST'])
-@login_required
-def send_message(current_user, group_id):
-    try:
-        data = request.get_json()
-        message = group_service.send_message(group_id, current_user.id, data)
-        return jsonify({
-            'success': True,
-            'message': 'Message sent',
-            'data': message.to_dict()
-        }), 201
-    except AppError as e:
-        return jsonify({
-            'success': False,
-            'error': e.__class__.__name__,
-            'message': str(e)
-        }), e.status_code
-    except Exception as e:
-        logger.error("send_message_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
-        return jsonify({
-            'success': False,
-            'error': 'InternalServerError',
-            'message': 'An unexpected error occurred'
-        }), 500
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+    root_logger.handlers.clear()
 
-@groups_bp.route('/<group_id>/messages', methods=['GET'])
-@login_required
-def get_messages(current_user, group_id):
-    try:
-        limit = request.args.get('limit', 50, type=int)
-        messages = group_service.get_messages(group_id, current_user.id, limit)
-        return jsonify({
-            'success': True,
-            'data': [m.to_dict() for m in messages]
-        }), 200
-    except AppError as e:
-        return jsonify({
-            'success': False,
-            'error': e.__class__.__name__,
-            'message': str(e)
-        }), e.status_code
-    except Exception as e:
-        logger.error("get_messages_error", user_id=current_user.id, group_id=group_id, error=str(e), exc_info=True)
-        return jsonify({
-            'success': False,
-            'error': 'InternalServerError',
-            'message': 'An unexpected error occurred'
-        }), 500
+    console_handler = logging.StreamHandler(sys.stdout)
+    root_logger.addHandler(console_handler)
+
+    log_file = app.config.get('LOG_FILE', 'logs/app.log')
+    file_handler = logging.FileHandler(log_file)
+    root_logger.addHandler(file_handler)
+
+    shared_processors = [
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt='iso'),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+    ]
+
+    structlog.configure(
+        processors=shared_processors + [
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ],
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+    console_handler.setFormatter(structlog.stdlib.ProcessorFormatter(
+        processor=structlog.dev.ConsoleRenderer(colors=True),
+        foreign_pre_chain=shared_processors,
+    ))
+    file_handler.setFormatter(structlog.stdlib.ProcessorFormatter(
+        processor=structlog.processors.JSONRenderer(),
+        foreign_pre_chain=shared_processors,
+    ))
+
+    _register_request_hooks(app)
+
+
+# Alias so `from app.middleware.logging import setup_logging` keeps working
+# for any existing code (e.g. middleware/__init__.py) that expects this name.
+setup_logging = configure_structlog
+
+
+def _register_request_hooks(app):
+    logger = structlog.get_logger('request')
+
+    @app.before_request
+    def start_request_log():
+        g.request_id = request.headers.get('X-Request-ID', str(uuid.uuid4()))
+        g.request_start_time = time.time()
+        structlog.contextvars.bind_contextvars(request_id=g.request_id)
+
+        logger.info('request_started', method=request.method, path=request.path)
+
+        if request.is_json:
+            body = request.get_json(silent=True) or {}
+            logger.debug('request_body', body=_redact(body))
+
+    @app.after_request
+    def end_request_log(response):
+        duration_ms = None
+        if hasattr(g, 'request_start_time'):
+            duration_ms = round((time.time() - g.request_start_time) * 1000, 2)
+
+        logger.info(
+            'request_finished',
+            method=request.method,
+            path=request.path,
+            status=response.status_code,
+            duration_ms=duration_ms,
+        )
+        return response
+
+    @app.teardown_request
+    def clear_request_context(exc=None):
+        structlog.contextvars.clear_contextvars()
