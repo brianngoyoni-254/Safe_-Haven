@@ -1,8 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { signOut as firebaseSignOut } from "firebase/auth";
 
 import { refreshToken, getMe, setAuthToken } from "./api/client";
+import { auth } from "./firebase";
 import Layout from "./shared/components/Layout";
 import AuthPages from "./features/auth/AuthPages";
 import LandingPage from "./landing/LandingPage";
@@ -89,14 +91,23 @@ function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
+    // Clear our own backend session (invalidates the httpOnly refresh_token cookie)
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     } catch {
       // Best-effort
-    } finally {
-      setAuthToken(null);
-      setAuthState({ user: null, token: null, expiresAt: null });
     }
+
+    // Clear Firebase's own persisted session (relevant for Google sign-in users;
+    // Firebase keeps its session in IndexedDB independent of our JWT cookie)
+    try {
+      await firebaseSignOut(auth);
+    } catch {
+      // Best-effort
+    }
+
+    setAuthToken(null);
+    setAuthState({ user: null, token: null, expiresAt: null });
   }, []);
 
   const updateUser = useCallback((patch) => {
