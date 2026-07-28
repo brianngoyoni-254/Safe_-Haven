@@ -33,13 +33,39 @@ const GoogleLogo = () => (
   </svg>
 );
 
+// Mirrors backend PASSWORD_RULES in app/auth/schemas.py — keep these in sync.
+const PASSWORD_RULES = [
+  { test: (pw) => pw.length >= 8, label: "8+ characters" },
+  { test: (pw) => /[A-Z]/.test(pw), label: "one uppercase letter" },
+  { test: (pw) => /[a-z]/.test(pw), label: "one lowercase letter" },
+  { test: (pw) => /\d/.test(pw), label: "one number" },
+  {
+    test: (pw) => /[!@#$%^&*()\-_=+[\]{};:'",.<>/?`~\\|]/.test(pw),
+    label: "one special character",
+  },
+];
+
+function validatePasswordStrength(password) {
+  const missing = PASSWORD_RULES.filter((rule) => !rule.test(password)).map((rule) => rule.label);
+  if (missing.length > 0) {
+    return `Password must contain at least ${missing.join(", ")}.`;
+  }
+  // bcrypt only hashes the first 72 bytes; matches the backend's rejection
+  // of anything longer so the user isn't told "success" for silently
+  // truncated input.
+  if (new TextEncoder().encode(password).length > 72) {
+    return "Password must be 72 characters or fewer.";
+  }
+  return null;
+}
+
 function friendlyError(code) {
   const map = {
     "auth/user-not-found": "No account found with that email.",
     "auth/wrong-password": "Incorrect password.",
     "auth/email-already-in-use": "That email is already registered.",
     "auth/invalid-email": "Please enter a valid email address.",
-    "auth/weak-password": "Password must be at least 6 characters.",
+    "auth/weak-password": "Password is too weak.",
     "auth/too-many-requests": "Too many attempts. Please try again later.",
     "auth/popup-closed-by-user": "Sign-in popup was closed.",
     "auth/network-request-failed": "Network error. Check your connection.",
@@ -268,7 +294,8 @@ function RegisterView({ onSwitch }) {
   const handleRegister = async () => {
     if (!username.trim()) { setError("Choose an anonymous display name."); return; }
     if (!email) { setError("Please enter your email."); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    const passwordError = validatePasswordStrength(password);
+    if (passwordError) { setError(passwordError); return; }
     setError("");
     setLoading(true);
     try {
@@ -295,7 +322,7 @@ function RegisterView({ onSwitch }) {
         <Input
           icon={Lock}
           type={showPassword ? "text" : "password"}
-          placeholder="Password (min 6 characters)"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           rightElement={
@@ -304,6 +331,9 @@ function RegisterView({ onSwitch }) {
             </button>
           }
         />
+        <p className="text-[11px] text-[#4A544C]/60 -mt-2 leading-relaxed">
+          At least 8 characters, with an uppercase letter, a lowercase letter, a number, and a special character.
+        </p>
         <ErrorBanner message={error} />
         <PrimaryButton onClick={handleRegister} loading={loading}>Create account</PrimaryButton>
       </div>
@@ -387,7 +417,8 @@ function ResetView({ onSwitch }) {
 
   const handleConfirm = async () => {
     if (!oobCode) { setError("This reset link is missing or invalid."); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    const passwordError = validatePasswordStrength(password);
+    if (passwordError) { setError(passwordError); return; }
     if (password !== confirmPassword) { setError("Passwords don't match."); return; }
     setError("");
     setLoading(true);
@@ -422,7 +453,7 @@ function ResetView({ onSwitch }) {
           <Input
             icon={Lock}
             type={showPassword ? "text" : "password"}
-            placeholder="New password (min 6 characters)"
+            placeholder="New password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             rightElement={
@@ -432,6 +463,9 @@ function ResetView({ onSwitch }) {
             }
           />
           <Input icon={Lock} type={showPassword ? "text" : "password"} placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+          <p className="text-[11px] text-[#4A544C]/60 -mt-2 leading-relaxed">
+            At least 8 characters, with an uppercase letter, a lowercase letter, a number, and a special character.
+          </p>
           <ErrorBanner message={error} />
           <PrimaryButton onClick={handleConfirm} loading={loading}>Update password</PrimaryButton>
         </div>
