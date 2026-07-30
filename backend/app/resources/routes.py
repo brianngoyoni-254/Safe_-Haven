@@ -10,6 +10,35 @@ logger = structlog.get_logger(__name__)
 @resources_bp.route('/', methods=['GET'])
 @login_required
 def get_resources(current_user):
+    """
+    List treatment-center / support resources
+    ---
+    tags:
+      - Resources
+    security:
+      - BearerAuth: []
+    parameters:
+      - in: query
+        name: county
+        type: string
+        required: false
+        description: Filter to resources in a specific county
+      - in: query
+        name: type
+        type: string
+        required: false
+        description: Filter by resource type
+    responses:
+      200:
+        description: Matching resources
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            data:
+              type: array
+              items: { type: object }
+    """
     try:
         county = request.args.get('county')
         type_filter = request.args.get('type')
@@ -36,6 +65,24 @@ def get_resources(current_user):
 @resources_bp.route('/counties', methods=['GET'])
 @login_required
 def get_counties(current_user):
+    """
+    List distinct counties that have at least one resource
+    ---
+    tags:
+      - Resources
+    security:
+      - BearerAuth: []
+    responses:
+      200:
+        description: Distinct county names, for populating a filter dropdown
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            data:
+              type: array
+              items: { type: string }
+    """
     try:
         counties = db.session.query(Resource.county).distinct().all()
         return jsonify({

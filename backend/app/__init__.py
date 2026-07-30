@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
+from flasgger import Swagger
 
 from app.config.env import Config
 from app.extensions import db, jwt, cors, migrate
@@ -65,5 +66,32 @@ def create_app(config_class=Config):
     app.register_blueprint(library_bp, url_prefix='/api/library')
     app.register_blueprint(resources_bp, url_prefix='/api/resources')
     app.register_blueprint(videos_bp, url_prefix='/api/videos')
-    
+
+    # Swagger / OpenAPI docs 
+    # Served at /apidocs/. Every route decorated with `security: - BearerAuth: []`
+    # in its YAML docstring will show a padlock in the UI — paste an access
+    # token there (no "Bearer " prefix needed, Flasgger adds it) to test
+    # authenticated endpoints directly from the docs page.
+    app.config['SWAGGER'] = {
+        'title': 'Safe Haven API',
+        'uiversion': 3,
+        'specs_route': '/apidocs/',
+    }
+    swagger_template = {
+        'info': {
+            'title': 'Safe Haven API',
+            'description': 'Recovery support platform API — auth, check-ins, milestones, resources, and donations.',
+            'version': '1.0.0',
+        },
+        'securityDefinitions': {
+            'BearerAuth': {
+                'type': 'apiKey',
+                'name': 'Authorization',
+                'in': 'header',
+                'description': "JWT access token. Paste ONLY the token — Flasgger prefixes 'Bearer ' automatically.",
+            }
+        },
+    }
+    Swagger(app, template=swagger_template)
+
     return app

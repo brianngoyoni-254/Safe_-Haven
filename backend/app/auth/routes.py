@@ -30,7 +30,40 @@ def _set_refresh_cookie(response, refresh_token, remember_me=True):
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """Register a new user"""
+    """
+    Register a new user
+    ---
+    tags:
+      - Auth
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [email, password, username]
+          properties:
+            email: { type: string, format: email, example: "user@example.com" }
+            password:
+              type: string
+              format: password
+              description: "8+ chars, must include upper, lower, digit, and special character"
+            username: { type: string, minLength: 2, maxLength: 80 }
+            sobriety_start: { type: string, format: date, example: "2025-01-15" }
+    responses:
+      201:
+        description: User registered successfully
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            message: { type: string }
+            data: { type: object }
+      400:
+        description: Validation error (e.g. weak password, malformed email)
+      409:
+        description: Email or username already taken
+    """
     try:
         data = request.get_json()
         user = auth_service.register_user(data)
@@ -56,7 +89,41 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """Login user"""
+    """
+    Login with email and password
+    ---
+    tags:
+      - Auth
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [email, password]
+          properties:
+            email: { type: string, format: email }
+            password: { type: string, format: password }
+            rememberMe:
+              type: boolean
+              default: true
+              description: "true = persistent refresh_token cookie (30 days); false = session cookie"
+    responses:
+      200:
+        description: Login successful. Sets an httpOnly refresh_token cookie; returns an access token in the body.
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            message: { type: string }
+            data:
+              type: object
+              properties:
+                access_token: { type: string }
+                user: { type: object }
+      401:
+        description: Invalid email or password
+    """
     try:
         data = request.get_json()
         remember_me = data.get('rememberMe', True)
@@ -87,7 +154,33 @@ def login():
 
 @auth_bp.route('/refresh', methods=['POST'])
 def refresh():
-    """Refresh access token"""
+    """
+    Exchange the refresh_token cookie for a new access token
+    ---
+    tags:
+      - Auth
+    description: >
+      Reads the httpOnly `refresh_token` cookie set by /login or /firebase.
+      Swagger UI cannot attach httpOnly cookies for you — this endpoint is
+      easiest to test from the browser dev console or an HTTP client that
+      shares your login session, not from the /apidocs page directly.
+    responses:
+      200:
+        description: New access token issued
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            data:
+              type: object
+              properties:
+                access_token: { type: string }
+                expires_in: { type: integer, example: 3600 }
+      400:
+        description: Refresh token cookie missing
+      401:
+        description: Refresh token invalid or expired
+    """
     try:
         refresh_token = request.cookies.get('refresh_token')
         if not refresh_token:
@@ -110,7 +203,37 @@ def refresh():
 
 @auth_bp.route('/firebase', methods=['POST'])
 def firebase_login():
-    """Login or register via a Firebase ID token"""
+    """
+    Login or register via a Firebase ID token
+    ---
+    tags:
+      - Auth
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required: [token]
+          properties:
+            token: { type: string, description: "Firebase ID token from the client SDK" }
+            rememberMe: { type: boolean, default: true }
+    responses:
+      200:
+        description: Login successful (user created on first sign-in). Sets refresh_token cookie.
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            message: { type: string }
+            data:
+              type: object
+              properties:
+                access_token: { type: string }
+                user: { type: object }
+      401:
+        description: Token missing, invalid, expired, revoked, or user disabled
+    """
     try:
         data = request.get_json()
         id_token = data.get('token')
@@ -143,9 +266,24 @@ def firebase_login():
 @auth_bp.route('/me', methods=['GET'])
 @login_required
 def session_check(current_user):
-    """Check whether the current access token still represents a valid
-    session, and return the user if so. Frontend can call this instead of
-    (or before) attempting a refresh."""
+    """
+    Check whether the current access token is still valid
+    ---
+    tags:
+      - Auth
+    security:
+      - BearerAuth: []
+    responses:
+      200:
+        description: Token is valid; current user returned
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            data: { type: object }
+      401:
+        description: Token missing, invalid, or expired
+    """
     return jsonify({
         'success': True,
         'data': current_user.to_dict()
@@ -153,7 +291,20 @@ def session_check(current_user):
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
-    """Clear the refresh token cookie so the session cannot be silently renewed."""
+    """
+    Log out and clear the refresh token cookie
+    ---
+    tags:
+      - Auth
+    responses:
+      200:
+        description: Logged out successfully; refresh_token cookie cleared
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            message: { type: string }
+    """
     try:
         response = jsonify({
             'success': True,

@@ -16,7 +16,44 @@ class DonationListResource(Resource):
     method_decorators = {'get': [login_required]}
 
     def post(self):
-        """Create a donation (authenticated or anonymous)"""
+        """
+        Create a donation and trigger an M-Pesa STK push
+        ---
+        tags:
+          - Donations
+        description: >
+          No auth required — donations can be made anonymously. If a valid
+          Bearer token is present it's used to associate the donation with
+          the logged-in user, but it's optional.
+        parameters:
+          - in: body
+            name: body
+            required: true
+            schema:
+              type: object
+              required: [amount, phone]
+              properties:
+                amount: { type: integer, minimum: 1, example: 500 }
+                phone:
+                  type: string
+                  example: "0712345678"
+                  description: "Kenyan number, format 07XXXXXXXX or 01XXXXXXXX"
+                name: { type: string, maxLength: 120, nullable: true }
+                message: { type: string, nullable: true }
+                anonymous: { type: boolean, default: false }
+                frequency: { type: string, enum: [once, monthly], default: once }
+        responses:
+          201:
+            description: Donation created and STK push initiated
+            schema:
+              type: object
+              properties:
+                success: { type: boolean }
+                message: { type: string }
+                data: { type: object }
+          400:
+            description: Validation error (bad amount or phone format)
+        """
         try:
             data = request.get_json()
 
@@ -50,6 +87,24 @@ class DonationListResource(Resource):
             }, 500
 
     def get(self, current_user):
+        """
+        List the current user's donations
+        ---
+        tags:
+          - Donations
+        security:
+          - BearerAuth: []
+        responses:
+          200:
+            description: The authenticated user's donation history
+            schema:
+              type: object
+              properties:
+                success: { type: boolean }
+                data:
+                  type: array
+                  items: { type: object }
+        """
         try:
             donations = donation_service.get_user_donations(current_user.id)
             return {
@@ -74,7 +129,25 @@ api.add_resource(DonationListResource, '/')
 
 @donations_bp.route('/mpesa/callback', methods=['POST'])
 def mpesa_callback():
-    """M-Pesa callback endpoint"""
+    """
+    M-Pesa STK push result callback (Safaricom -> this server)
+    ---
+    tags:
+      - Donations
+    description: >
+      Called by Safaricom's Daraja API, not by the frontend. Documented here
+      for completeness — not meant to be exercised from Swagger UI.
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          description: Raw Daraja STK push callback payload
+    responses:
+      200:
+        description: Callback processed (Safaricom expects a 200 regardless of outcome)
+    """
     try:
         data = request.get_json()
         result = donation_service.process_callback(data)
@@ -86,6 +159,28 @@ def mpesa_callback():
 
 @donations_bp.route('/status/<checkout_request_id>', methods=['GET'])
 def check_status(checkout_request_id):
+    """
+    Check the status of an M-Pesa transaction
+    ---
+    tags:
+      - Donations
+    parameters:
+      - in: path
+        name: checkout_request_id
+        type: string
+        required: true
+        description: The CheckoutRequestID returned when the donation was created
+    responses:
+      200:
+        description: Current transaction status
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            data: { type: object }
+      500:
+        description: Lookup failed
+    """
     try:
         status = donation_service.check_transaction_status(checkout_request_id)
         return jsonify({

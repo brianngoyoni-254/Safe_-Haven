@@ -14,6 +14,37 @@ class CheckinListResource(Resource):
     method_decorators = [login_required]
 
     def post(self, current_user):
+        """
+        Create or update today's check-in
+        ---
+        tags:
+          - Check-ins
+        security:
+          - BearerAuth: []
+        parameters:
+          - in: body
+            name: body
+            required: true
+            schema:
+              type: object
+              required: [mood, cravingLevel]
+              properties:
+                mood: { type: integer, minimum: 1, maximum: 5 }
+                cravingLevel: { type: integer, minimum: 1, maximum: 5 }
+                soberToday: { type: boolean, default: true }
+                notes: { type: string, nullable: true }
+        responses:
+          201:
+            description: Check-in saved (created, or overwritten if one already exists for today)
+            schema:
+              type: object
+              properties:
+                success: { type: boolean }
+                message: { type: string }
+                data: { type: object }
+          400:
+            description: mood or cravingLevel out of range / missing
+        """
         try:
             data = request.get_json()
             checkin = checkin_service.create_checkin(current_user.id, data)
@@ -37,6 +68,24 @@ class CheckinListResource(Resource):
             }, 500
 
     def get(self, current_user):
+        """
+        List all check-ins for the current user
+        ---
+        tags:
+          - Check-ins
+        security:
+          - BearerAuth: []
+        responses:
+          200:
+            description: Check-ins, most recent first
+            schema:
+              type: object
+              properties:
+                success: { type: boolean }
+                data:
+                  type: array
+                  items: { type: object }
+        """
         try:
             checkins = checkin_service.get_user_checkins(current_user.id)
             return {
@@ -56,6 +105,24 @@ class CheckinTodayResource(Resource):
     method_decorators = [login_required]
 
     def get(self, current_user):
+        """
+        Get today's check-in for the current user
+        ---
+        tags:
+          - Check-ins
+        security:
+          - BearerAuth: []
+        responses:
+          200:
+            description: Today's check-in, or null if none exists yet
+            schema:
+              type: object
+              properties:
+                success: { type: boolean }
+                data:
+                  type: object
+                  nullable: true
+        """
         try:
             checkin = checkin_service.get_today_checkin(current_user.id)
             return {
@@ -75,6 +142,29 @@ class CheckinStatsResource(Resource):
     method_decorators = [login_required]
 
     def get(self, current_user):
+        """
+        Get aggregate check-in stats for the current user
+        ---
+        tags:
+          - Check-ins
+        security:
+          - BearerAuth: []
+        responses:
+          200:
+            description: Aggregate stats across all of the user's check-ins
+            schema:
+              type: object
+              properties:
+                success: { type: boolean }
+                data:
+                  type: object
+                  properties:
+                    total_days: { type: integer }
+                    avg_mood: { type: number }
+                    avg_craving: { type: number }
+                    sober_days: { type: integer }
+                    streak: { type: integer, description: "Consecutive sober days ending today" }
+        """
         try:
             stats = checkin_service.get_stats(current_user.id)
             return {

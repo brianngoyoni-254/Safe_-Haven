@@ -13,6 +13,39 @@ MILESTONE_DAYS = [7, 30, 90, 180, 365, 730, 1000]
 @milestones_bp.route('/', methods=['GET'])
 @login_required
 def get_milestones(current_user):
+    """
+    Get earned and upcoming recovery milestones
+    ---
+    tags:
+      - Milestones
+    security:
+      - BearerAuth: []
+    description: >
+      Earned milestones are backfilled the first time this endpoint is hit
+      after a threshold (7/30/90/180/365/730/1000 days) is crossed, based on
+      the user's sobriety_start date.
+    responses:
+      200:
+        description: Milestones the user has earned, plus upcoming ones with days remaining
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            data:
+              type: object
+              properties:
+                earned:
+                  type: array
+                  items: { type: object }
+                upcoming:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      days: { type: integer }
+                      days_until: { type: integer }
+                      achieved: { type: boolean, example: false }
+    """
     try:
         milestones = Milestone.query.filter_by(user_id=current_user.id).all()
 
