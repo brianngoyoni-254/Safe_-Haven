@@ -7,6 +7,14 @@ name = "pypi"
 flask-jwt-extended = "*"
 flask-restful = "*"
 flasgger = "*"
+gunicorn = "*"
+psycopg2-binary = "*"
+flask-cors = "*"
+python-dotenv = "*"
+firebase-admin = "*"
+requests = "*"
+flask-sqlalchemy = "*"
+flask-migrate = "*"
 
 [dev-packages]
 
