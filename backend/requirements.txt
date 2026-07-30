@@ -67,3 +67,4 @@ werkzeug==3.1.8; python_version >= '3.9'
 structlog==26.1.0
 bcrypt==5.0.0
 marshmallow==4.3.0
+flasgger==0.9.7.1
