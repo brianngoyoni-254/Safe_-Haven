@@ -76,13 +76,14 @@ function friendlyError(code) {
   return map[code] ?? "Something went wrong. Please try again.";
 }
 
-async function exchangeFirebaseToken(firebaseToken, username = null) {
+async function exchangeFirebaseToken(firebaseToken, { username = null, rememberMe = true } = {}) {
   const res = await fetch("/api/auth/firebase", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify({
       token: firebaseToken,
+      rememberMe,
       ...(username ? { username } : {}),
     }),
   });
@@ -187,6 +188,7 @@ function LoginView({ onSwitch }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [gLoading, setGLoading] = useState(false);
   const [error, setError] = useState("");
@@ -197,7 +199,7 @@ function LoginView({ onSwitch }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseToken = await result.user.getIdToken();
-      const data = await exchangeFirebaseToken(firebaseToken);
+      const data = await exchangeFirebaseToken(firebaseToken, { rememberMe });
       login(data);
       navigate(redirectTo, { replace: true });
     } catch (err) {
@@ -214,7 +216,7 @@ function LoginView({ onSwitch }) {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       const firebaseToken = await result.user.getIdToken();
-      const data = await exchangeFirebaseToken(firebaseToken);
+      const data = await exchangeFirebaseToken(firebaseToken, { rememberMe });
       login(data);
       navigate(redirectTo, { replace: true });
     } catch (err) {
@@ -243,7 +245,16 @@ function LoginView({ onSwitch }) {
             </button>
           }
         />
-        <div className="flex justify-end -mt-1">
+        <div className="flex items-center justify-between -mt-1">
+          <label className="flex items-center gap-2 text-xs text-[#4A544C] cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-[#12302E]/25 text-[#0D6E64] focus:ring-[#0D6E64] cursor-pointer"
+            />
+            Remember me
+          </label>
           <button onClick={() => onSwitch("forgot")} className="text-xs text-[#0D6E64] hover:text-[#12302E] hover:underline transition-colors cursor-pointer">
             Forgot password?
           </button>
@@ -281,7 +292,7 @@ function RegisterView({ onSwitch }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseToken = await result.user.getIdToken();
-      const data = await exchangeFirebaseToken(firebaseToken, result.user.displayName ?? undefined);
+      const data = await exchangeFirebaseToken(firebaseToken, { username: result.user.displayName ?? undefined, rememberMe: true });
       login(data);
       navigate(redirectTo, { replace: true });
     } catch (err) {
@@ -301,7 +312,7 @@ function RegisterView({ onSwitch }) {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseToken = await result.user.getIdToken();
-      const data = await exchangeFirebaseToken(firebaseToken, username.trim());
+      const data = await exchangeFirebaseToken(firebaseToken, { username: username.trim(), rememberMe: true });
       login(data);
       navigate(redirectTo, { replace: true });
     } catch (err) {

@@ -8,6 +8,26 @@ import structlog
 auth_bp = Blueprint('auth', __name__)
 logger = structlog.get_logger(__name__)
 
+REFRESH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days, matches create_refresh_token's expiry
+
+
+def _set_refresh_cookie(response, refresh_token, remember_me=True):
+    """Attach the refresh_token cookie.
+
+    remember_me=True  -> persistent cookie (Max-Age set), survives browser restarts.
+    remember_me=False -> session cookie (no Max-Age/Expires at all), cleared
+                          by the browser as soon as it's fully closed.
+    """
+    cookie_kwargs = dict(
+        httponly=True,
+        secure=False,       # set True once served over HTTPS in production
+        samesite='Lax',
+        path='/api/auth',
+    )
+    if remember_me:
+        cookie_kwargs['max_age'] = REFRESH_COOKIE_MAX_AGE
+    response.set_cookie('refresh_token', refresh_token, **cookie_kwargs)
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """Register a new user"""
@@ -39,6 +59,7 @@ def login():
     """Login user"""
     try:
         data = request.get_json()
+        remember_me = data.get('rememberMe', True)
         result = auth_service.login_user(data)
 
         refresh_token = result.pop('refresh_token')
@@ -48,15 +69,7 @@ def login():
             'message': 'Login successful',
             'data': result
         })
-        response.set_cookie(
-            'refresh_token',
-            refresh_token,
-            httponly=True,
-            secure=False,       # set True once served over HTTPS in production
-            samesite='Lax',
-            max_age=30 * 24 * 60 * 60,  # 30 days, matches create_refresh_token's expiry
-            path='/api/auth',
-        )
+        _set_refresh_cookie(response, refresh_token, remember_me)
         return response, 200
     except AppError as e:
         return jsonify({
@@ -101,6 +114,7 @@ def firebase_login():
     try:
         data = request.get_json()
         id_token = data.get('token')
+        remember_me = data.get('rememberMe', True)
         result = auth_service.login_with_firebase(id_token)
 
         refresh_token = result.pop('refresh_token')
@@ -110,15 +124,7 @@ def firebase_login():
             'message': 'Login successful',
             'data': result
         })
-        response.set_cookie(
-            'refresh_token',
-            refresh_token,
-            httponly=True,
-            secure=False,
-            samesite='Lax',
-            max_age=30 * 24 * 60 * 60,
-            path='/api/auth',
-        )
+        _set_refresh_cookie(response, refresh_token, remember_me)
         return response, 200
     except AppError as e:
         return jsonify({
