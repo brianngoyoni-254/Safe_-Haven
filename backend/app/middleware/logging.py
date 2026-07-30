@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import time
 import uuid
@@ -31,7 +32,9 @@ def configure_structlog(app):
     """Configure structlog + stdlib logging for the Flask app.
 
     Console output is human-readable/colorized; logs/app.log gets
-    one JSON object per line.
+    one JSON object per line. File logging is skipped in production
+    (e.g. Render) since the filesystem there is ephemeral and stdout
+    is already captured as the service's logs.
     """
     log_level = app.config.get('LOG_LEVEL', 'INFO')
 
@@ -43,8 +46,11 @@ def configure_structlog(app):
     root_logger.addHandler(console_handler)
 
     log_file = app.config.get('LOG_FILE', 'logs/app.log')
-    file_handler = logging.FileHandler(log_file)
-    root_logger.addHandler(file_handler)
+    file_handler = None
+    if app.config.get('FLASK_ENV') != 'production':
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        file_handler = logging.FileHandler(log_file)
+        root_logger.addHandler(file_handler)
 
     shared_processors = [
         structlog.contextvars.merge_contextvars,
@@ -67,10 +73,11 @@ def configure_structlog(app):
         processor=structlog.dev.ConsoleRenderer(colors=True),
         foreign_pre_chain=shared_processors,
     ))
-    file_handler.setFormatter(structlog.stdlib.ProcessorFormatter(
-        processor=structlog.processors.JSONRenderer(),
-        foreign_pre_chain=shared_processors,
-    ))
+    if file_handler:
+        file_handler.setFormatter(structlog.stdlib.ProcessorFormatter(
+            processor=structlog.processors.JSONRenderer(),
+            foreign_pre_chain=shared_processors,
+        ))
 
     _register_request_hooks(app)
 
