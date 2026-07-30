@@ -76,8 +76,10 @@ function friendlyError(code) {
   return map[code] ?? "Something went wrong. Please try again.";
 }
 
+const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
+
 async function exchangeFirebaseToken(firebaseToken, { username = null, rememberMe = true } = {}) {
-  const res = await fetch("/api/auth/firebase", {
+  const res = await fetch(`${API_BASE}/auth/firebase`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
