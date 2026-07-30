@@ -145,20 +145,23 @@ export default function Dashboard() {
     return Math.max(0, Math.floor((Date.now() - start.getTime()) / (1000 * 60 * 60 * 24)));
   }, [user?.sobriety_start]);
 
+  // Streak = days since the most recent check-in explicitly marked "not sober".
+  // A gap with no check-in at all is NOT treated as a relapse — only a
+  // recorded soberToday:false entry resets the streak. If there's never
+  // been a non-sober check-in, the streak equals soberDays (since
+  // sobriety_start).
   const streak = useMemo(() => {
-    if (checkIns.length === 0) return 0;
-    const sorted = [...checkIns].sort((a, b) => b.date.localeCompare(a.date));
-    let count = 0;
-    let prev = new Date();
-    for (const ci of sorted) {
-      const d = new Date(`${ci.date}T12:00:00`);
-      const diff = Math.round((prev.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-      if (diff > 1 || !ci.soberToday) break;
-      count++;
-      prev = d;
-    }
-    return count;
-  }, [checkIns]);
+    if (soberDays === null) return 0;
+
+    const lastRelapse = [...checkIns]
+      .filter((ci) => ci.soberToday === false)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+
+    if (!lastRelapse) return soberDays;
+
+    const relapseDate = new Date(`${lastRelapse.date}T12:00:00`);
+    return Math.max(0, Math.floor((Date.now() - relapseDate.getTime()) / (1000 * 60 * 60 * 24)));
+  }, [checkIns, soberDays]);
 
   const moodAvg = useMemo(() => {
     if (checkIns.length === 0) return null;
