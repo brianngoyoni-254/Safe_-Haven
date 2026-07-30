@@ -20,8 +20,8 @@ def _set_refresh_cookie(response, refresh_token, remember_me=True):
     """
     cookie_kwargs = dict(
         httponly=True,
-        secure=False,       # set True once served over HTTPS in production
-        samesite='Lax',
+        secure=True,
+        samesite='None',       # cross-site (Vercel <-> ngrok) requires None+Secure
         path='/api/auth',
     )
     if remember_me:
@@ -314,8 +314,8 @@ def logout():
             'refresh_token',
             '',
             httponly=True,
-            secure=False,       # keep in sync with the login/firebase routes
-            samesite='Lax',
+            secure=True,        # keep in sync with the login/firebase routes
+            samesite='None',
             max_age=0,
             expires=0,
             path='/api/auth',
