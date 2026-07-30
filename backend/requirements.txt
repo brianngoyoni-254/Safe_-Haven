@@ -64,3 +64,6 @@ sqlalchemy==2.0.51; python_version >= '3.7'
 typing-extensions==4.16.0; python_version >= '3.9'
 urllib3==2.7.0; python_version >= '3.10'
 werkzeug==3.1.8; python_version >= '3.9'
+structlog==26.1.0
+bcrypt==5.0.0
+marshmallow==4.3.0
