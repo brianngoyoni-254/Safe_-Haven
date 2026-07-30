@@ -6,8 +6,8 @@ from datetime import date, timedelta
 class CheckinService:
     def create_checkin(self, user_id, data):
         mood = data.get('mood')
-        craving_level = data.get('craving_level')
-        sober_today = data.get('sober_today', True)
+        craving_level = data.get('cravingLevel')
+        sober_today = data.get('soberToday', True)
         notes = data.get('notes')
         
         if not mood or not 1 <= mood <= 5:
