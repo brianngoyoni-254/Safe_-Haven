@@ -192,6 +192,11 @@ export default function CheckIn() {
         )}
       </div>
 
+      <div className="flex items-center gap-2.5 text-sm font-medium text-[#8a2340] bg-[#FCE7EF] border border-[#8a2340]/15 rounded-xl px-4 py-3">
+        <XCircle className="w-4 h-4 flex-shrink-0" />
+        You haven't checked in today. Kindly check in below.
+      </div>
+
       <section className="bg-[#12302E] rounded-[20px] p-5">
         <h2 className="text-base font-semibold text-[#F7F4EC] mb-3 tracking-tight">Were you sober today?</h2>
         <div className="flex gap-2.5">
