@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import request, jsonify
+from flask import request
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from app.extensions import db
 import structlog
@@ -17,12 +17,12 @@ def login_required(fn):
             user = User.query.get(user_id)
             if not user:
                 logger.warning("auth_user_not_found", user_id=user_id)
-                return jsonify({'error': 'User not found'}), 401
+                return {'error': 'User not found'}, 401
             kwargs['current_user'] = user
             return fn(*args, **kwargs)
         except Exception as e:
             logger.warning("authentication_failed", error=str(e))
-            return jsonify({'error': 'Authentication required'}), 401
+            return {'error': 'Authentication required'}, 401
     return wrapper
 
 def admin_required(fn):
@@ -53,7 +53,7 @@ def rate_limit(limit=100, per=60):
 
             if len(requests[ip]) >= limit:
                 logger.warning("rate_limit_exceeded", ip=ip)
-                return jsonify({'error': 'Rate limit exceeded'}), 429
+                return {'error': 'Rate limit exceeded'}, 429
 
             requests[ip].append(now)
             return fn(*args, **kwargs)

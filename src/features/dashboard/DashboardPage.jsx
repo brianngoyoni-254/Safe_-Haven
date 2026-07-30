@@ -122,11 +122,11 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
       try {
-        const { data } = await dashboardApi.get();
+        const { data: res } = await dashboardApi.get();
         if (cancelled) return;
-        setCheckIns(data.checkIns ?? []);
-        setTodayCheckIn(data.todayCheckIn ?? null);
-        setUpcomingSession(data.upcomingSession ?? null);
+        setCheckIns(res.data.checkIns ?? []);
+        setTodayCheckIn(res.data.todayCheckIn ?? null);
+        setUpcomingSession(res.data.upcomingSession ?? null);
       } catch (err) {
         if (!cancelled) setError("Couldn't load your dashboard. Please refresh.");
       } finally {

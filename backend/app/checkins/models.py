@@ -36,14 +36,14 @@ class CheckIn(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'user_id': self.user_id,
+            'userId': self.user_id,
             'date': self.date.isoformat() if self.date else None,
             'mood': self.mood,
-            'craving_level': self.craving_level,
-            'sober_today': self.sober_today,
+            'cravingLevel': self.craving_level,
+            'soberToday': self.sober_today,
             'notes': self.notes,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
         }
 
     def __repr__(self):

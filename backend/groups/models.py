@@ -44,16 +44,16 @@ class Group(db.Model):
             'name': self.name,
             'description': self.description,
             'category': self.category,
-            'organizer_id': self.organizer_id,
+            'organizerId': self.organizer_id,
             'organizer': self.organizer.username if self.organizer else None,
-            'is_private': self.is_private,
-            'meeting_schedule': self.meeting_schedule,
-            'meeting_days_of_week': self.meeting_days_of_week or [],
-            'meeting_time': self.meeting_time.isoformat() if self.meeting_time else None,
-            'meeting_timezone': self.meeting_timezone,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'member_count': len(self.memberships),
-            'is_member': False,
+            'isPrivate': self.is_private,
+            'meetingSchedule': self.meeting_schedule,
+            'meetingDaysOfWeek': self.meeting_days_of_week or [],
+            'meetingTime': self.meeting_time.isoformat() if self.meeting_time else None,
+            'meetingTimezone': self.meeting_timezone,
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'memberCount': len(self.memberships),
+            'isMember': False,
         }
         if include_messages:
             data['messages'] = [m.to_dict() for m in self.messages]
@@ -84,9 +84,9 @@ class GroupMembership(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'group_id': self.group_id,
-            'user_id': self.user_id,
-            'joined_at': self.joined_at.isoformat() if self.joined_at else None,
+            'groupId': self.group_id,
+            'userId': self.user_id,
+            'joinedAt': self.joined_at.isoformat() if self.joined_at else None,
         }
 
 class GroupMessage(db.Model):
@@ -112,11 +112,11 @@ class GroupMessage(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'group_id': self.group_id,
-            'author_id': self.author_id,
-            'author_username': self.author.username if self.author else None,
+            'groupId': self.group_id,
+            'authorId': self.author_id,
+            'authorName': self.author.username if self.author else None,
             'text': self.text,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'edited_at': self.edited_at.isoformat() if self.edited_at else None,
-            'is_edited': self.edited_at is not None,
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'editedAt': self.edited_at.isoformat() if self.edited_at else None,
+            'isEdited': self.edited_at is not None,
         }

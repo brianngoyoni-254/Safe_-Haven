@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { crisisApi } from "../../api/endpoints";
+import { useAuth } from "../../App";
 
 const CATEGORY_ICONS = { LifeBuoy, Pill, HeartHandshake, Baby };
 
@@ -118,19 +119,28 @@ function HotlineRow({ line, color }) {
 const serif = { fontFamily: "'Fraunces', serif" };
 
 export default function Crisis() {
+  const { isReady } = useAuth();
   const [emergencyLines, setEmergencyLines] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Wait for the auth bootstrap (silent refresh) to finish before firing the
+    // request. On a cold page load this runs *before* AuthProvider has had a
+    // chance to restore the token, which was causing the crisis fetch to go
+    // out with no Authorization header and get a 401. `isReady` flips to true
+    // once the bootstrap attempt settles either way, so this doesn't block
+    // logged-out visitors — it just avoids the race for logged-in ones.
+    if (!isReady) return;
+
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await crisisApi.list();
+        const { data: body } = await crisisApi.list();
         if (cancelled) return;
-        setEmergencyLines(data.emergencyLines ?? []);
-        setCategories(data.categories ?? []);
+        setEmergencyLines(body.data?.emergency_lines ?? []);
+        setCategories(body.data?.categories ?? []);
       } catch {
         if (!cancelled) setError("Couldn't load crisis resources right now.");
       } finally {
@@ -138,11 +148,11 @@ export default function Crisis() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [isReady]);
 
   const navItems = [
     { id: "emergency", label: "Emergency" },
-    ...categories.map((c) => ({ id: c.id, label: c.navLabel })),
+    ...categories.map((c) => ({ id: c.id, label: c.nav_label })),
   ];
 
   if (isLoading) {
@@ -226,7 +236,7 @@ export default function Crisis() {
                 <h2 className="font-semibold text-[#12302E] tracking-tight">{cat.title}</h2>
               </div>
               <div className="divide-y divide-[#12302E]/8">
-                {cat.lines.map((line) => (
+                {cat.hotlines.map((line) => (
                   <HotlineRow key={line.name} line={line} color={cat.color} />
                 ))}
               </div>

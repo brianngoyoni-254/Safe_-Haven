@@ -20,6 +20,15 @@ class CrisisEmergencyLine(db.Model):
     desc = db.Column(db.Text, nullable=False)
     position = db.Column(db.Integer, nullable=False, default=0)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'numbers': self.numbers or [],
+            'desc': self.desc,
+            'position': self.position,
+        }
+
     def __repr__(self):
         return f"<CrisisEmergencyLine id={self.id!r}>"
 
@@ -46,6 +55,17 @@ class CrisisCategory(db.Model):
         cascade="all, delete-orphan",
     )
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'nav_label': self.nav_label,
+            'icon': self.icon,
+            'color': self.color,
+            'position': self.position,
+            'hotlines': [h.to_dict() for h in self.hotlines],
+        }
+
     def __repr__(self):
         return f"<CrisisCategory id={self.id!r}>"
 
@@ -65,6 +85,17 @@ class CrisisHotline(db.Model):
     whatsapp = db.Column(db.String(30), nullable=True)
     desc = db.Column(db.Text, nullable=False)
     position = db.Column(db.Integer, nullable=False, default=0)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'category_id': self.category_id,
+            'name': self.name,
+            'numbers': self.numbers or [],
+            'whatsapp': self.whatsapp,
+            'desc': self.desc,
+            'position': self.position,
+        }
 
     def __repr__(self):
         return f"<CrisisHotline name={self.name!r}>"

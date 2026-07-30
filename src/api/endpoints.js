@@ -2,37 +2,38 @@ import api from "./client.js";
 
 export const ENDPOINTS = {
   auth: {
-    login: "/api/auth/login",
-    register: "/api/auth/register",
-    forgotPassword: "/api/auth/forgot-password",
-    resetPassword: "/api/auth/reset-password",
-    logout: "/api/auth/logout",
-    firebase: "/api/auth/firebase",
-    refresh: "/api/auth/refresh",
+    login: "/auth/login",
+    register: "/auth/register",
+    forgotPassword: "/auth/forgot-password",
+    resetPassword: "/auth/reset-password",
+    logout: "/auth/logout",
+    firebase: "/auth/firebase",
+    refresh: "/auth/refresh",
   },
   users: {
-    me: "/api/users/me",
-    sobrietyStart: "/api/users/me/sobriety-start",
-    profile: "/api/users/me/profile",
+    me: "/users/me",
+    sobrietyStart: "/users/me/sobriety-start",
+    profile: "/users/me/profile",
   },
   checkIns: {
-    list: "/api/checkins",
-    create: "/api/checkins",
-    today: "/api/checkins/today",
+    list: "/checkins/",
+    create: "/checkins/",
+    today: "/checkins/today",
   },
-  milestones: "/api/milestones",
-  dashboard: "/api/dashboard",
+  milestones: "/milestones/",
+  dashboard: "/dashboard/",
   groups: {
-    base: "/api/groups",
-    categories: "/api/groups/categories",
-    mine: "/api/groups/mine",
+    base: "/groups",       // used to build sub-paths like /groups/:id
+    list: "/groups/",      // root of the groups blueprint — needs trailing slash
+    categories: "/groups/categories",
+    mine: "/groups/mine",
   },
-  journal: "/api/journal",
-  resources: "/api/resources",
-  crisis: "/api/crisis",
+  journal: "/journal/",
+  resources: "/resources/",
+  crisis: "/crisis/",
   donations: {
-    stkPush: "/api/donations/mpesa/stk-push",
-    status: "/api/donations/mpesa/status",
+    initiate: "/donations/",   // POST creates the donation & triggers the M-Pesa STK push server-side
+    status: "/donations/status",
   },
 };
 
@@ -65,11 +66,11 @@ export const dashboardApi = {
 };
 
 export const groupsApi = {
-  list: () => api.get(ENDPOINTS.groups.base),
+  list: () => api.get(ENDPOINTS.groups.list),
   mine: () => api.get(ENDPOINTS.groups.mine),
   categories: () => api.get(ENDPOINTS.groups.categories),
   get: (id) => api.get(`${ENDPOINTS.groups.base}/${id}`),
-  create: (data) => api.post(ENDPOINTS.groups.base, data),
+  create: (data) => api.post(ENDPOINTS.groups.list, data),
   join: (id) => api.post(`${ENDPOINTS.groups.base}/${id}/join`),
   leave: (id) => api.post(`${ENDPOINTS.groups.base}/${id}/leave`),
   delete: (id) => api.delete(`${ENDPOINTS.groups.base}/${id}`),
@@ -86,8 +87,8 @@ export const groupsApi = {
 export const journalApi = {
   list: () => api.get(ENDPOINTS.journal),
   create: (data) => api.post(ENDPOINTS.journal, data),
-  update: (id, data) => api.put(`${ENDPOINTS.journal}/${id}`, data),
-  delete: (id) => api.delete(`${ENDPOINTS.journal}/${id}`),
+  update: (id, data) => api.put(`${ENDPOINTS.journal}${id}`, data),
+  delete: (id) => api.delete(`${ENDPOINTS.journal}${id}`),
 };
 
 export const resourcesApi = {
@@ -99,7 +100,7 @@ export const crisisApi = {
 };
 
 export const donationsApi = {
-  initiate: (data) => api.post(ENDPOINTS.donations.stkPush, data),
+  initiate: (data) => api.post(ENDPOINTS.donations.initiate, data),
   status: (checkoutRequestId) =>
     api.get(`${ENDPOINTS.donations.status}/${checkoutRequestId}`),
 };

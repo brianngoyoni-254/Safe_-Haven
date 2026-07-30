@@ -28,8 +28,10 @@ def summary():
     upcoming_session = get_upcoming_group_session(user.id)
 
     return jsonify({
-        "checkIns": [public_checkin(c) for c in checkins],
-        "todayCheckIn": public_checkin(today_checkin) if today_checkin else None,
-        "earnedMilestones": [public_milestone(m) for m in milestones],
-        "upcomingSession": upcoming_session,
+        "data": {
+            "checkIns": [public_checkin(c) for c in checkins],
+            "todayCheckIn": public_checkin(today_checkin) if today_checkin else None,
+            "earnedMilestones": [public_milestone(m) for m in milestones],
+            "upcomingSession": upcoming_session,
+        }
     })

@@ -41,7 +41,7 @@ function AuthProvider({ children }) {
       try {
         const { access_token, expires_in } = await refreshToken();
         setAuthToken(access_token);
-        const user = await getMe(access_token);
+        const user = await getMe();
         if (!cancelled) {
           setAuthState({
             user,

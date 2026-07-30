@@ -231,8 +231,8 @@ function GroupChat({ group, user, onBack, onLeave }) {
     setIsLoading(true);
     (async () => {
       try {
-        const { data } = await groupsApi.messages.list(group.id);
-        if (!cancelled) setMessages(data);
+        const { data: res } = await groupsApi.messages.list(group.id);
+        if (!cancelled) setMessages(res.data);
       } catch { if (!cancelled) setMessages([]); } finally { if (!cancelled) setIsLoading(false); }
     })();
     return () => { cancelled = true; };
@@ -249,8 +249,8 @@ function GroupChat({ group, user, onBack, onLeave }) {
     const optimistic = { id: tempId, authorId: uid, authorName: uname, text, createdAt: Date.now() };
     setMessages((prev) => [...prev, optimistic]);
     try {
-      const { data: saved } = await groupsApi.messages.send(group.id, text);
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? saved : m)));
+      const { data: res } = await groupsApi.messages.send(group.id, text);
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? res.data : m)));
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setDraft(text);
@@ -267,8 +267,8 @@ function GroupChat({ group, user, onBack, onLeave }) {
     if (!text || !editingMessageId) return;
     setIsSavingEdit(true);
     try {
-      const { data: saved } = await groupsApi.messages.edit(group.id, editingMessageId, text);
-      setMessages((prev) => prev.map((m) => (m.id === editingMessageId ? saved : m)));
+      const { data: res } = await groupsApi.messages.edit(group.id, editingMessageId, text);
+      setMessages((prev) => prev.map((m) => (m.id === editingMessageId ? res.data : m)));
       setEditingId(null); setEditDraft("");
     } catch {} finally { setIsSavingEdit(false); }
   };
@@ -430,8 +430,8 @@ export default function Groups({ publicView = false }) {
     (async () => {
       setIsLoading(true);
       try {
-        const { data } = await groupsApi.list();
-        if (!cancelled) setGroups(data);
+        const { data: res } = await groupsApi.list();
+        if (!cancelled) setGroups(res.data);
       } catch { if (!cancelled) setGroups([]); } finally { if (!cancelled) setIsLoading(false); }
     })();
     return () => { cancelled = true; };
@@ -441,8 +441,8 @@ export default function Groups({ publicView = false }) {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await groupsApi.categories();
-        if (!cancelled) setCategories(data);
+        const { data: res } = await groupsApi.categories();
+        if (!cancelled) setCategories(res.data);
       } catch { if (!cancelled) setCategories([]); }
     })();
     return () => { cancelled = true; };
@@ -463,16 +463,16 @@ export default function Groups({ publicView = false }) {
   const handleJoin = async (group) => {
     setBusyId(group.id);
     try {
-      const { data: updated } = await groupsApi.join(group.id);
-      setGroups((prev) => prev.map((g) => (g.id === group.id ? updated : g)));
+      const { data: res } = await groupsApi.join(group.id);
+      setGroups((prev) => prev.map((g) => (g.id === group.id ? res.data : g)));
     } finally { setBusyId(null); }
   };
 
   const handleLeave = async (group) => {
     setBusyId(group.id);
     try {
-      const { data: updated } = await groupsApi.leave(group.id);
-      setGroups((prev) => prev.map((g) => (g.id === group.id ? updated : g)));
+      const { data: res } = await groupsApi.leave(group.id);
+      setGroups((prev) => prev.map((g) => (g.id === group.id ? res.data : g)));
       setActiveGroup((current) => (current?.id === group.id ? null : current));
     } finally { setBusyId(null); }
   };
@@ -484,8 +484,8 @@ export default function Groups({ publicView = false }) {
   };
 
   const handleCreate = async (payload) => {
-    const { data: created } = await groupsApi.create(payload);
-    setGroups((prev) => [created, ...prev]);
+    const { data: res } = await groupsApi.create(payload);
+    setGroups((prev) => [res.data, ...prev]);
   };
 
   const handleOpenChat = (group) => setActiveGroup(group);

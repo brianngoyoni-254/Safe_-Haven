@@ -237,9 +237,9 @@ export default function Donations() {
     }
     try {
       const { data } = await donationsApi.status(checkoutRequestId);
-      if (data.status === "success") {
+      if (data.data.status === "success") {
         setStatus("success");
-      } else if (data.status === "failed") {
+      } else if (data.data.status === "failed") {
         setStatus("idle");
         setError("The payment wasn't completed. Please try again.");
       } else {
@@ -264,10 +264,10 @@ export default function Donations() {
       });
       setStatus("pending");
       pollDeadlineRef.current = Date.now() + POLL_TIMEOUT_MS;
-      pollTimerRef.current = setTimeout(() => pollStatus(data.checkoutRequestId), POLL_INTERVAL_MS);
+      pollTimerRef.current = setTimeout(() => pollStatus(data.data.checkoutRequestId), POLL_INTERVAL_MS);
     } catch (err) {
       setStatus("idle");
-      setError(err?.response?.data?.error || "Couldn't reach M-Pesa right now. Please try again.");
+      setError(err?.response?.data?.message || "Couldn't reach M-Pesa right now. Please try again.");
     }
   };
 

@@ -13,6 +13,14 @@ def create_app(config_class=Config):
     """Application factory pattern"""
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    # Treat "/api/x" and "/api/x/" as the same route instead of redirecting
+    # between them. Without this, a request to "/api/groups" (no trailing
+    # slash, matching how the frontend calls it) gets a 308 redirect to
+    # "/api/groups/" — and browsers drop the Authorization header when
+    # following a redirect, so the redirected request lands unauthenticated
+    # and 401s even though the original request had a valid token.
+    app.url_map.strict_slashes = False
     
     # Initialize extensions
     db.init_app(app)
