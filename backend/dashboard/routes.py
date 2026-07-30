@@ -3,7 +3,7 @@ from datetime import date
 from flask import Blueprint, jsonify, g
 
 from .decorators import require_auth
-from .models import (
+from .services import (
     get_checkin,
     get_checkin_history,
     public_checkin,
