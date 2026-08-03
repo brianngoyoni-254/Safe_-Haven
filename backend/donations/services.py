@@ -122,6 +122,22 @@ class DonationService:
         """Get user's donation history"""
         return Donation.query.filter_by(user_id=user_id).order_by(Donation.created_at.desc()).all()
 
+    # Result codes Safaricom's stkpushquery endpoint returns that genuinely
+    # mean the transaction is over and did not succeed. Anything NOT in this
+    # set — including codes we've never seen before, or no ResultCode at
+    # all — is treated as "still in progress", not "failed". This matters
+    # because querying before the user has responded to the STK push can
+    # return a variety of transient/undocumented codes (or none at all),
+    # and guessing wrong there wrongly kills a payment that's still live.
+    # The frontend's own poll timeout is what eventually gives up if a
+    # transaction genuinely never resolves.
+    _DEFINITE_FAILURE_CODES = {
+        '1',     # Insufficient funds
+        '1032',  # Request cancelled by user
+        '2001',  # Wrong PIN entered
+        '1025',  # Unable to lock subscriber (parallel transaction in progress)
+    }
+
     def check_transaction_status(self, checkout_request_id):
         """Check transaction status"""
         try:
@@ -132,30 +148,30 @@ class DonationService:
             if donation.status == 'pending':
                 response = mpesa_service.query_status(checkout_request_id)
                 result_code = response.get('ResultCode')
+                result_code_str = str(result_code) if result_code is not None else None
 
-                if result_code is None:
-                    # No ResultCode at all usually means Safaricom hasn't
-                    # got a result yet — e.g. errorCode 500.001.1001
-                    # ("The transaction is being processed"), which happens
-                    # when we query before the user has responded to the
-                    # STK push on their phone. Keep waiting; don't fail it.
-                    logger.info(
-                        "mpesa_status_still_processing",
-                        checkout_request_id=checkout_request_id,
-                        response=response,
-                    )
-                elif result_code == '0':
+                if result_code_str == '0':
                     donation.status = 'success'
                     receipt = response.get('ReceiptNumber')
                     if receipt:
                         donation.mpesa_receipt_number = receipt
                     db.session.commit()
-                elif result_code == '1037':
-                    pass
-                else:
+                elif result_code_str in self._DEFINITE_FAILURE_CODES:
                     donation.status = 'failed'
                     donation.result_desc = response.get('ResultDesc')
                     db.session.commit()
+                else:
+                    # None (no ResultCode — e.g. errorCode 500.001.1001,
+                    # "The transaction is being processed"), '1037' (DS
+                    # timeout — let the frontend's own timeout handle it
+                    # rather than failing early), or any other/unrecognized
+                    # code — don't guess, just keep waiting.
+                    logger.info(
+                        "mpesa_status_still_processing",
+                        checkout_request_id=checkout_request_id,
+                        result_code=result_code,
+                        response=response,
+                    )
 
             return donation.to_dict()
         except Exception as e:
