@@ -85,7 +85,7 @@ export default function ReceiptPage() {
     if (!cardRef.current) return;
     setDownloading(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
+      const html2canvas = (await import("html2canvas-pro")).default;
       const canvas = await html2canvas(cardRef.current, {
         backgroundColor: "#F7F4EC",
         scale: 2,
@@ -97,6 +97,7 @@ export default function ReceiptPage() {
       link.click();
     } catch (e) {
       // If html2canvas isn't installed yet, printing to PDF still works.
+      console.error("Receipt download failed:", e);
       window.alert("Couldn't generate the image. You can still use Print → Save as PDF.");
     } finally {
       setDownloading(false);
