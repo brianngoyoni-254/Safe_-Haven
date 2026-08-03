@@ -157,6 +157,54 @@ def mpesa_callback():
         return jsonify({'ResultCode': 1, 'ResultDesc': str(e)}), 400
 
 
+@donations_bp.route('/receipt/<checkout_request_id>', methods=['GET'])
+def get_receipt(checkout_request_id):
+    """
+    Get the public receipt for a confirmed donation
+    ---
+    tags:
+      - Donations
+    description: >
+      Public, unauthenticated endpoint — this is what the QR code on the
+      success screen (and the /donations/receipt/:checkoutRequestId page)
+      calls. Only returns data once the donation's status is 'success';
+      returns a 400 for pending/failed/unknown requests so it can't be used
+      to probe for donations before they're confirmed.
+    parameters:
+      - in: path
+        name: checkout_request_id
+        type: string
+        required: true
+        description: The CheckoutRequestID returned when the donation was created
+    responses:
+      200:
+        description: Receipt data (donor name or anonymous, amount, M-Pesa code, masked phone, received_at)
+        schema:
+          type: object
+          properties:
+            success: { type: boolean }
+            data: { type: object }
+      400:
+        description: Receipt not found or donation not yet confirmed
+    """
+    try:
+        receipt = donation_service.get_receipt(checkout_request_id)
+        return jsonify({'success': True, 'data': receipt}), 200
+    except AppError as e:
+        return jsonify({
+            'success': False,
+            'error': e.__class__.__name__,
+            'message': str(e)
+        }), e.status_code
+    except Exception as e:
+        logger.error("get_receipt_error", checkout_request_id=checkout_request_id, error=str(e), exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'InternalServerError',
+            'message': 'An unexpected error occurred'
+        }), 500
+
+
 @donations_bp.route('/status/<checkout_request_id>', methods=['GET'])
 def check_status(checkout_request_id):
     """

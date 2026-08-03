@@ -104,6 +104,20 @@ class DonationService:
             logger.error("callback_processing_failed", error=str(e), exc_info=True)
             raise AppError(f'Callback processing failed: {str(e)}')
 
+    def get_receipt(self, checkout_request_id):
+        """Return public receipt data for a confirmed donation.
+
+        Deliberately refuses to hand back receipt data for donations that
+        haven't succeeded yet, so a guessed/incomplete checkout_request_id
+        can't be used to fish for info while a payment is still pending.
+        """
+        donation = Donation.query.filter_by(checkout_request_id=checkout_request_id).first()
+        if not donation:
+            raise ValidationError('Receipt not found')
+        if donation.status != 'success':
+            raise ValidationError('This donation has not been confirmed yet')
+        return donation.to_receipt_dict()
+
     def get_user_donations(self, user_id):
         """Get user's donation history"""
         return Donation.query.filter_by(user_id=user_id).order_by(Donation.created_at.desc()).all()

@@ -36,6 +36,27 @@ class Donation(db.Model):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
+    def _masked_phone(self):
+        """Show enough of the number to be recognizable without exposing it fully."""
+        if not self.phone or len(self.phone) < 9:
+            return self.phone
+        return f"{self.phone[:6]}***{self.phone[-3:]}"
+
+    def to_receipt_dict(self):
+        """Public-safe payload for the printable/downloadable receipt.
+        Only ever meaningful once status == 'success'."""
+        received_at = self.updated_at or self.created_at
+        return {
+            'donor_name': None if self.anonymous else (self.name or None),
+            'anonymous': self.anonymous,
+            'amount': self.amount,
+            'frequency': self.frequency,
+            'phone_masked': self._masked_phone(),
+            'mpesa_receipt_number': self.mpesa_receipt_number,
+            'received_at': received_at.isoformat() if received_at else None,
+            'checkout_request_id': self.checkout_request_id,
+        }
+
     def to_dict(self):
         return {
             'id': self.id,
