@@ -6,9 +6,12 @@ from app.extensions import db
 from app.core.exceptions import ValidationError, AppError
 from marshmallow import ValidationError as MarshmallowError
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import structlog
 
 logger = structlog.get_logger(__name__)
+
+EAT_TZ = ZoneInfo("Africa/Nairobi")
 
 class DonationService:
     def create_donation(self, user_id, data):
@@ -90,7 +93,14 @@ class DonationService:
                         trans_date = str(item.get('Value'))
                         if len(trans_date) == 14:
                             dt = datetime.strptime(trans_date, '%Y%m%d%H%M%S')
-                            donation.updated_at = dt.replace(tzinfo=timezone.utc)
+                            # Safaricom returns this in Kenya local time (EAT,
+                            # UTC+3) even though it looks like a naive
+                            # timestamp — it is NOT UTC. Attach the correct
+                            # zone, then convert to true UTC for storage, so
+                            # every other reader of this column (receipts,
+                            # dashboards, anything) gets a value that
+                            # actually means what it says.
+                            donation.updated_at = dt.replace(tzinfo=EAT_TZ).astimezone(timezone.utc)
             else:
                 donation.status = 'failed'
                 donation.result_code = result_code

@@ -13,14 +13,22 @@ function formatReceivedAt(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  const datePart = d.toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" });
-  const timePart = d.toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit" });
+  const datePart = d.toLocaleDateString("en-KE", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Africa/Nairobi",
+  });
+  const timePart = d.toLocaleTimeString("en-KE", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Africa/Nairobi",
+  });
   return `${datePart} · ${timePart}`;
 }
 
-/**
- * Diagonal repeating "SAFE HAVEN" watermark, purely CSS — no image asset needed.
- */
+//Diagonal repeating "SAFE HAVEN" watermark, purely CSS — no image asset needed.
+ 
 function Watermark() {
   const rows = Array.from({ length: 10 });
   return (
