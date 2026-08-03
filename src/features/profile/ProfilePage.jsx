@@ -26,9 +26,12 @@ export default function Profile() {
   const [error, setError] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  const todayStr = new Date().toISOString().split("T")[0];
+
   const handleSave = async () => {
     setError("");
     if (!username.trim()) { setError("Please set a display name."); return; }
+    if (startDate && startDate < todayStr) { setError("Recovery start date can't be in the past."); return; }
     setIsSaving(true);
     setIsSaved(false);
     try {
@@ -58,7 +61,7 @@ export default function Profile() {
       <section className="bg-[#F7F4EC] rounded-[20px] border border-[#12302E]/10 shadow-sm p-5 space-y-4">
         <h2 className="flex items-center gap-2 text-base font-semibold text-[#12302E] tracking-tight"><User className="w-4 h-4 text-[#0D6E64]" /> Recovery Profile</h2>
         <div><label className="block text-sm font-medium text-[#12302E] mb-1.5">Anonymous Display Name *</label><input type="text" placeholder="e.g. Phoenix, River, Sage" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full rounded-xl border border-[#12302E]/15 px-3 py-2.5 text-sm text-[#12302E] bg-white placeholder-[#4A544C]/40 focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-shadow" /><p className="text-xs text-[#4A544C]/70 mt-1.5">This is how others in the community will see you.</p></div>
-        <div><label className="block text-sm font-medium text-[#12302E] mb-1.5">Recovery Start Date</label><input type="date" value={startDate ?? ""} max={new Date().toISOString().split("T")[0]} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-xl border border-[#12302E]/15 px-3 py-2.5 text-sm text-[#12302E] bg-white focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-shadow" /></div>
+        <div><label className="block text-sm font-medium text-[#12302E] mb-1.5">Recovery Start Date</label><input type="date" value={startDate ?? ""} min={todayStr} onChange={(e) => { const val = e.target.value; if (val && val < todayStr) { setError("Recovery start date can't be in the past."); return; } setError(""); setStartDate(val); }} className="w-full rounded-xl border border-[#12302E]/15 px-3 py-2.5 text-sm text-[#12302E] bg-white focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-shadow" /></div>
         <div><label className="block text-sm font-medium text-[#12302E] mb-1.5">Personal Recovery Goals</label><textarea placeholder="What are you working towards? What does success look like for you?" value={goals} onChange={(e) => setGoals(e.target.value)} rows={4} className="w-full resize-none rounded-xl border border-[#12302E]/15 p-3 text-sm text-[#12302E] bg-white placeholder-[#4A544C]/40 focus:outline-none focus:ring-2 focus:ring-[#0D6E64] focus:border-transparent transition-shadow" /></div>
         {error && <p className="text-sm text-[#8a2340] bg-[#FCE7EF] border border-[#8a2340]/15 rounded-xl px-3.5 py-2.5">{error}</p>}
         {isSaved && !error && <p className="flex items-center gap-1.5 text-sm text-[#0D6E64] bg-[#D8E8E4] border border-[#0D6E64]/15 rounded-xl px-3.5 py-2.5"><CheckCircle2 className="w-4 h-4" /> Profile saved!</p>}
