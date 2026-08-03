@@ -14,8 +14,38 @@ import {
   BookOpen,
   Copy,
   Check,
+  Printer,
+  ExternalLink,
 } from "lucide-react";
 import { donationsApi } from "../../api/endpoints";
+
+/**
+ * Small QR code pointing at the public receipt page, generated entirely
+ * client-side via the `qrcode` package (npm install qrcode) — no external
+ * service call, so no receipt info ever leaves the browser.
+ */
+function ReceiptQr({ url }) {
+  const [dataUrl, setDataUrl] = useState("");
+
+  useEffect(() => {
+    if (!url) return;
+    let cancelled = false;
+    import("qrcode")
+      .then((QRCode) =>
+        QRCode.toDataURL(url, {
+          width: 152,
+          margin: 1,
+          color: { dark: "#12302E", light: "#00000000" },
+        })
+      )
+      .then((d) => { if (!cancelled) setDataUrl(d); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [url]);
+
+  if (!dataUrl) return null;
+  return <img src={dataUrl} alt="Scan to view your receipt" className="w-[152px] h-[152px] mx-auto" />;
+}
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 120000;
@@ -120,7 +150,7 @@ function AmountForm({ amount, setAmount, customAmount, setCustomAmount, frequenc
 const MPESA_GREEN = "#4CAF00";
 const MPESA_DARK = "#1A2E1A";
 
-function MpesaCard({ finalAmount, phone, setPhone, status, error, onPay, copied, onCopyTill }) {
+function MpesaCard({ finalAmount, phone, setPhone, status, error, onPay, copied, onCopyTill, receiptUrl }) {
   const disabled = !finalAmount || finalAmount < 1 || !isValidKenyanPhone(phone) || status === "sending" || status === "pending";
 
   return (
@@ -143,7 +173,24 @@ function MpesaCard({ finalAmount, phone, setPhone, status, error, onPay, copied,
               <CheckCircle2 className="w-8 h-8" style={{ color: MPESA_GREEN }} />
             </div>
             <h3 className="text-lg font-medium text-[#12302E] tracking-tight mb-1.5" style={serif}>Asante sana — thank you!</h3>
-            <p className="text-sm text-[#4A544C]">Your {formatKES(finalAmount)} contribution was received. A confirmation SMS from M-Pesa is on its way to your phone.</p>
+            <p className="text-sm text-[#4A544C] mb-5">Your {formatKES(finalAmount)} contribution was received. A confirmation SMS from M-Pesa is on its way to your phone.</p>
+
+            {receiptUrl && (
+              <div className="bg-white rounded-xl border border-[#12302E]/10 p-4 max-w-[220px] mx-auto">
+                <ReceiptQr url={receiptUrl} />
+                <p className="text-[11px] text-[#4A544C] mt-2.5 leading-snug">
+                  Scan to open, print, or download your receipt
+                </p>
+                <a
+                  href={receiptUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-[#0D6E64] hover:underline"
+                >
+                  <Printer size={13} /> Open receipt here <ExternalLink size={12} />
+                </a>
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -214,8 +261,13 @@ export default function Donations() {
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [checkoutRequestId, setCheckoutRequestId] = useState(null);
   const pollTimerRef = useRef(null);
   const pollDeadlineRef = useRef(null);
+
+  const receiptUrl = checkoutRequestId
+    ? `${window.location.origin}/donations/receipt/${checkoutRequestId}`
+    : null;
 
   useEffect(() => {
     return () => clearTimeout(pollTimerRef.current);
@@ -263,8 +315,9 @@ export default function Donations() {
         frequency,
       });
       setStatus("pending");
+      setCheckoutRequestId(data.data.checkout_request_id);
       pollDeadlineRef.current = Date.now() + POLL_TIMEOUT_MS;
-      pollTimerRef.current = setTimeout(() => pollStatus(data.data.checkoutRequestId), POLL_INTERVAL_MS);
+      pollTimerRef.current = setTimeout(() => pollStatus(data.data.checkout_request_id), POLL_INTERVAL_MS);
     } catch (err) {
       setStatus("idle");
       setError(err?.response?.data?.message || "Couldn't reach M-Pesa right now. Please try again.");
@@ -310,6 +363,7 @@ export default function Donations() {
           phone={phone} setPhone={setPhone}
           status={status} error={error} onPay={handlePay}
           copied={copied} onCopyTill={handleCopyTill}
+          receiptUrl={receiptUrl}
         />
       </div>
 
