@@ -13,7 +13,7 @@ export const ENDPOINTS = {
   users: {
     me: "/users/me",
     sobrietyStart: "/users/me/sobriety-start",
-    profile: "/users/me/profile",
+    profile: "/users/me", // was "/users/me/profile" — no such backend route (was causing 404 -> reported as CORS failure)
   },
   checkIns: {
     list: "/checkins/",

@@ -35,7 +35,10 @@ export default function Profile() {
     setIsSaving(true);
     setIsSaved(false);
     try {
-      const { data } = await usersApi.updateProfile({ username, sobrietyStart: startDate || null, goals: goals || null });
+      // Backend's UpdateUserSchema (marshmallow) expects snake_case keys and
+      // rejects unknown fields by default — sending sobrietyStart (camelCase)
+      // was causing a 400 ValidationError. Use sobriety_start to match the schema.
+      const { data } = await usersApi.updateProfile({ username, sobriety_start: startDate || null, goals: goals || null });
       updateUser(data);
       setIsSaved(true);
     } catch { setError("Couldn't save your profile. Please try again."); } finally { setIsSaving(false); }
