@@ -34,6 +34,7 @@ export const ENDPOINTS = {
   donations: {
     initiate: "/donations/",   // POST creates the donation & triggers the M-Pesa STK push server-side
     status: "/donations/status",
+    receipt: "/donations/receipt",
   },
 };
 
@@ -103,6 +104,8 @@ export const donationsApi = {
   initiate: (data) => api.post(ENDPOINTS.donations.initiate, data),
   status: (checkoutRequestId) =>
     api.get(`${ENDPOINTS.donations.status}/${checkoutRequestId}`),
+  getReceipt: (checkoutRequestId) =>
+    api.get(`${ENDPOINTS.donations.receipt}/${checkoutRequestId}`),
 };
 
 export default api;

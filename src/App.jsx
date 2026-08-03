@@ -18,6 +18,7 @@ import Resources from "./features/resources/ResourcesPage";
 import Crisis from "./features/crisis/CrisisPage";
 import Profile from "./features/profile/ProfilePage";
 import Donations from "./features/donations/DonationsPage";
+import DonationReceipt from "./features/donations/ReceiptPage";
 
 const AuthContext = createContext(null);
 
@@ -175,6 +176,7 @@ function AppRoutes() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/groups/*" element={<GroupsGate />} />
       <Route path="/crisis" element={<Crisis />} />
+      <Route path="/donations/receipt/:checkoutRequestId" element={<DonationReceipt />} />
 
       <Route element={<GuestRoute />}>
         <Route path="/login" element={<AuthPages view="login" />} />
