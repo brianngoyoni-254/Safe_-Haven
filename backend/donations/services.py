@@ -133,7 +133,18 @@ class DonationService:
                 response = mpesa_service.query_status(checkout_request_id)
                 result_code = response.get('ResultCode')
 
-                if result_code == '0':
+                if result_code is None:
+                    # No ResultCode at all usually means Safaricom hasn't
+                    # got a result yet — e.g. errorCode 500.001.1001
+                    # ("The transaction is being processed"), which happens
+                    # when we query before the user has responded to the
+                    # STK push on their phone. Keep waiting; don't fail it.
+                    logger.info(
+                        "mpesa_status_still_processing",
+                        checkout_request_id=checkout_request_id,
+                        response=response,
+                    )
+                elif result_code == '0':
                     donation.status = 'success'
                     receipt = response.get('ReceiptNumber')
                     if receipt:
